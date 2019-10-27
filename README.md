@@ -11,8 +11,8 @@ To install CMake please follow this guide:
 https://cmake.org/install/
 
 # Directory Structure
-./build -> All the compiled binaries.
-./src -> The source files (.cc, .cpp).
-./include -> All the header files (.h, .hpp).
-./doc -> All the documentation files.
-./test -> All the test files.
+./build -> All the compiled binaries.  
+./src -> The source files (.cc, .cpp).  
+./include -> All the header files (.h, .hpp).  
+./doc -> All the documentation files.  
+./test -> All the test files.  
