@@ -1,0 +1,6 @@
+cmake_minimum_required( VERSION 2.8 )
+project( OpenCV_ASV_SIFT )
+find_package( OpenCV REQUIRED )
+include_directories( ${OpenCV_INCLUDE_DIRS} )
+add_executable( OpenCV_ASV_SIFT )
+target_link_libraries( OpenCV_ASV_SIFT ${OpenCV_LIBS} )
