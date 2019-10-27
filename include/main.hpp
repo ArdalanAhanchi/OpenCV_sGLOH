@@ -1,0 +1,1 @@
+//Empty sample header file.
