@@ -1,5 +1,5 @@
-# OpenCV_ASV_SIFT
-Accumulated Stability Voting descriptor for OpenCV.
+# OpenCV_sGLOH
+This project's goal is to improve the SIFT-Based descriptors' stability to rotations.
 
 # Compilation
 To compile the program, please make sure OpenCV is installed on your machine.

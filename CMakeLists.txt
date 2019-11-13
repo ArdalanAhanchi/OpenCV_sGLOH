@@ -1,10 +1,10 @@
 cmake_minimum_required( VERSION 2.8 )
 
-project( OpenCV_ASV_SIFT )
+project( OpenCV_sGLOH )
 
 ## Check if it's windows, if it is, set the OpenCV Directory.
 if( WIN32 ) 
-    set("OpenCV_DIR" "D:/opencv")
+    set( "OpenCV_DIR" "D:/opencv/build" )
 endif()
 
 ## Find the opencv library.
