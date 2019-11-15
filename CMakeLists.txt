@@ -13,6 +13,6 @@ find_package( OpenCV REQUIRED )
 ## Setup the build directory.
 include_directories( ${OpenCV_INCLUDE_DIRS} include )
 set( EXECUTABLE_OUTPUT_PATH build )
-add_executable( OpenCV_ASV_SIFT ./src/main.cpp )
+add_executable( OpenCV_sGLOH ./src/main.cpp )
 
-target_link_libraries( OpenCV_ASV_SIFT ${OpenCV_LIBS} )
+target_link_libraries( OpenCV_sGLOH ${OpenCV_LIBS} )
