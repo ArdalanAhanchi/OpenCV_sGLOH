@@ -7,6 +7,8 @@
 #include <cmath>
 #include <iostream>
 
+#include "gloh.cpp"
+
 using namespace cv;
 
 const double PI = 3.141592653589793;
@@ -79,11 +81,11 @@ int main(int argc, char** argv)
 	// second, each region is broken up into m histogram bins
 	// for each region R sub (r, d) where r is defined as the integer set from 1 to n and d is defined as the integer set from 0 to m - 1
 	// the ith histogram bin value h sub (r, d) is defined as
-	// sum for each pixel p in R sub (r, d) (Gm(p) * 
+	// sum for each pixel p in R sub (r, d) (Gm(p) *
 
 	const int n = 2;
 	const int m = 4;
-	bool psi = false; 
+	bool psi = false;
 	double radius = 5.4;
 	double sigma = 1.0;
 	double H[n + 1][m][m];
@@ -117,7 +119,7 @@ int main(int argc, char** argv)
 		{
 			H[0][0][i] = CalculateBin(0, 0, i, m, n, radius, sigma, gradients, 100);
 		}
-		
+
 		for (int d = 1; d < m; d++)
 		{
 			for (int i = 0; i < m; i++)
@@ -137,6 +139,7 @@ int main(int argc, char** argv)
 			}
 		}
 	}
-	
-	
+
+    //Call the test function to make some good ol pyramids.
+	test(img);
 }
