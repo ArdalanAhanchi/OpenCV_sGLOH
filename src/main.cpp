@@ -4,6 +4,7 @@
 
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
+#include <opencv2/xfeatures2d/nonfree.hpp>
 #include <cmath>
 #include <iostream>
 
@@ -50,12 +51,20 @@ double CalculateBin(int r, int d, int i, int m, int n, double radius, double sig
 	for (int a = 0; a < gradientsCount; a++)
 	{
 		GradientPixel current = gradients[a];
-		double rho = std::sqrt(std::pow(current.x, 2) + std::pow(current.y, 2));
+		double rho = std::log(std::sqrt(std::pow(current.x, 2) + std::pow(current.y, 2)));
 		double theta = 0;
 		if (current.x > 0 && current.y > 0)
 		{
 			theta = std::atan((double)((double)current.y / (double)current.x));
 		}
+		else if (current.x == 0 && current.y > 0)
+		{
+			theta = PI / 2;
+		}
+		/*else if (current.x == 0 && current.y < 0)
+		{
+			theta = 3 * PI / 2;
+		}*/
 		if (rho >= ringStart && rho < ringEnd && theta >= sliceStart && theta < sliceEnd)
 		{
 			double power = -std::pow(GetM(2 * PI, current.orientation - (2 * PI * i / m)), 2) / std::pow(2 * sigma, 2);
@@ -80,14 +89,26 @@ int main(int argc, char** argv)
 	// for each region R sub (r, d) where r is defined as the integer set from 1 to n and d is defined as the integer set from 0 to m - 1
 	// the ith histogram bin value h sub (r, d) is defined as
 	// sum for each pixel p in R sub (r, d) (Gm(p) * 
-
+	Mat image = imread("foreground.jpg");
+	namedWindow("image");
+	imshow("image", image);
+	waitKey(0);
+	
 	const int n = 2;
 	const int m = 4;
 	bool psi = false; 
 	double radius = 5.4;
-	double sigma = 1.0;
+	double sigma = 1.6;
 	double H[n + 1][m][m];
 	GradientPixel gradients[100];
+	std::vector<KeyPoint> points;
+	Ptr<xfeatures2d::SIFT> sift = xfeatures2d::SIFT::create(0, 3, 0.04, 10.0, sigma);
+	/*sift->detect(image, points);*/
+	Mat siftDescriptors;
+	Mat emptyMask;
+	// detectAndCompute instead of just detect to allow quality comparison between SIFT descriptor and sGLOH descriptor
+	sift->detectAndCompute(image, emptyMask, points, siftDescriptors);
+	
 	for (int x = 0; x < 10; x++)
 	{
 		for (int y = 0; y < 10; y++)

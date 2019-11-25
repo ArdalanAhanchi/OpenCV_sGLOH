@@ -4,7 +4,7 @@ project( OpenCV_sGLOH )
 
 ## Check if it's windows, if it is, set the OpenCV Directory.
 if( WIN32 ) 
-    set( "OpenCV_DIR" "D:/opencv/build" )
+    set( "OpenCV_DIR" "D:/source/repos/opencv/cmakebuild/install" )
 endif()
 
 ## Find the opencv library.
