@@ -8,6 +8,8 @@
 #include <cmath>
 #include <iostream>
 
+#include "gloh.cpp"
+
 using namespace cv;
 
 const double PI = 3.141592653589793;
@@ -96,7 +98,7 @@ int main(int argc, char** argv)
 	
 	const int n = 2;
 	const int m = 4;
-	bool psi = false; 
+	bool psi = false;
 	double radius = 5.4;
 	double sigma = 1.6;
 	double H[n + 1][m][m];
@@ -138,7 +140,7 @@ int main(int argc, char** argv)
 		{
 			H[0][0][i] = CalculateBin(0, 0, i, m, n, radius, sigma, gradients, 100);
 		}
-		
+
 		for (int d = 1; d < m; d++)
 		{
 			for (int i = 0; i < m; i++)
@@ -158,6 +160,7 @@ int main(int argc, char** argv)
 			}
 		}
 	}
-	
-	
+
+    //Call the test function to make some good ol pyramids.
+	test(img);
 }
