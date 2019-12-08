@@ -60,7 +60,7 @@ double CalculateBin(int r, int d, int i, int m, int n, bool psi, double sigma, M
 	double ringEnd = (r + 1) * (origin.size / 2) / (n + 1);
 	double sliceStart = d * 2 * PI / m;
 	double sliceEnd = (d + 1) * 2 * PI / m;
-	if (!psi)
+	if (psi && r == 0 && d == 0)
 	{
 		sliceStart = 0;
 		sliceEnd = 2 * PI;
@@ -98,7 +98,95 @@ double CalculateBin(int r, int d, int i, int m, int n, bool psi, double sigma, M
 	result *= (1 / std::sqrt(2 * PI) * sigma);
 	return result;
 }
+void detectAndCompute(InputArray _image, std::vector<KeyPoint> &keypoints, OutputArray _descriptors)
+{
 
+	size_t ksize = keypoints.size();
+
+}
+
+void calculate_sGLOH_Descriptor(int m, int n, bool psi, double sigma, Mat &gradients, std::vector<KeyPoint> &keypoints, OutputArray _descriptors)
+{
+	Mat descriptors;
+
+	// number of doubles the descriptor consists of
+	int length = m * (m * n + 1 + (m - 1) * (psi ? 0 : 1));
+
+	size_t ksize = keypoints.size();
+	_descriptors.create((int)ksize, length, CV_64F);
+	descriptors = _descriptors.getMat();
+	descriptors.setTo(0);
+
+	for (int keypoint = 0; keypoint < (int)ksize; keypoint++)
+	{
+		 
+		int counter = 0;
+		if (psi)
+		{
+			for (int i = 0; i < m; i++)
+			{
+				int index = counter + ((i + 0) % m);
+				//std::cout << index << std::endl;
+				descriptors.at<double>(keypoint, index) = CalculateBin(0, 0, i, m, n, psi, sigma, gradients, keypoints[keypoint]);
+				//aych[index] = CalculateBin(0, 0, i, m, n, psi, sigma, gradients, keypoints[keypoint]);
+				//std::cout << aych[index] << std::endl;
+				//H[0][0][i] = aych[index];
+				//H[0][0][i] = CalculateBin(0, 0, i, m, n, sigma, gradients, points[keypoint]);
+			}
+			counter += m;
+		}
+		else
+		{
+			for (int d = 0; d < m; d++)
+			{
+				for (int i = 0; i < m; i++)
+				{
+					int index = counter + ((i + d) % m);
+					//std::cout << index << std::endl;
+					descriptors.at<double>(keypoint, index) = CalculateBin(0, d, i, m, n, psi, sigma, gradients, keypoints[keypoint]);
+					//aych[index] = CalculateBin(0, d, i, m, n, psi, sigma, gradients, keypoints[keypoint]);
+					//std::cout << aych[index] << std::endl;
+					//H[0][d][i] = aych[index];
+					//H[0][d][i] = CalculateBin(0, d, i, m, n, sigma, gradients, points[keypoint]);
+
+				}
+				counter += m;
+			}
+		}
+
+		for (int r = 1; r <= n; r++)
+		{
+			for (int d = 0; d < m; d++)
+			{
+				for (int i = 0; i < m; i++)
+				{
+					int index = counter + ((i + d) % m);
+					//std::cout << index << std::endl;
+					descriptors.at<double>(keypoint, index) = CalculateBin(r, d, i, m, n, psi, sigma, gradients, keypoints[keypoint]);
+					//aych[index] = CalculateBin(r, d, i, m, n, true, sigma, gradients, keypoints[keypoint]);
+					//std::cout << aych[index] << std::endl;
+					//H[r][d][i] = aych[index];
+					//H[r][d][i] = CalculateBin(r, d, i, m, n, sigma, gradients, points[keypoint]);
+
+				}
+				counter += m;
+			}
+		}
+
+		// reduce descriptor vector to unit length
+		double sum = 0;
+		for (int i = 0; i < length; i++)
+		{
+			sum += std::pow(descriptors.at<double>(keypoint, i), 2);
+		}
+		double norm = std::sqrt(sum);
+		for (int i = 0; i < length; i++)
+		{
+			descriptors.at<double>(keypoint, i) = descriptors.at<double>(keypoint, i) / norm;
+			//std::cout << aych.at<double>(i) << std::endl;
+		}
+	}
+}
 
 int main(int argc, char** argv)
 {
@@ -113,9 +201,9 @@ int main(int argc, char** argv)
 	// the ith histogram bin value h sub (r, d) is defined as
 	// sum for each pixel p in R sub (r, d) (Gm(p) * 
 	Mat image = imread("foreground.jpg");
-	namedWindow("image");
-	imshow("image", image);
-	waitKey(0);
+	//namedWindow("image");
+	//imshow("image", image);
+	//waitKey(0);
 	
 	const int n = 2;
 	const int m = 8;
@@ -123,8 +211,8 @@ int main(int argc, char** argv)
 	const bool psi = false;
 	double radius = 7;
 	double sigma = 1.6;
-	double H[n + 1][m][m];
-	const int length = m * (m * n + 1 + (m - 1) * (psi ? 1 : 0));
+	//double H[n + 1][m][m];
+	const int length = m * (m * n + 1 + (m - 1) * (psi ? 0 : 1));
 	//double aych[length];
 	double aych[length];
 	//aych.create(length, 1, CV_64F);
@@ -134,7 +222,11 @@ int main(int argc, char** argv)
 	Mat siftDescriptors;
 	Mat emptyMask;
 	// detectAndCompute instead of just detect to allow quality comparison between SIFT descriptor and sGLOH descriptor
+	time_t startSIFT = std::time(NULL);
 	sift->detectAndCompute(image, emptyMask, points, siftDescriptors);
+	time_t stopSIFT = std::time(NULL);
+	std::cout << "SIFT took this long to detect and compute:\t\t";
+	std::cout << (stopSIFT - startSIFT) << std::endl;
 	std::srand(std::time(NULL));
 	Mat descriptorsFinal;
 	OutputArray descriptors = descriptorsFinal;
@@ -153,73 +245,79 @@ int main(int argc, char** argv)
 			gradients.at<Vec2d>(y, x)[1] = current[1];
 		}
 	}
-	for (int keypoint = 59; keypoint < 60/*(int)points.size()*/; keypoint++)
-	{
-		int counter = 0;
-		if (psi)
-		{
-			for (int d = 0; d < m; d++)
-			{
-				for (int i = 0; i < m; i++)
-				{
-					int index = counter + ((i + d) % m);
-					//std::cout << index << std::endl;
-					aych[index] = CalculateBin(0, d, i, m, n, psi, sigma, gradients, points[keypoint]);
-					//std::cout << aych[index] << std::endl;
-					//H[0][d][i] = aych[index];
-					//H[0][d][i] = CalculateBin(0, d, i, m, n, sigma, gradients, points[keypoint]);
+	//for (int keypoint = 59; keypoint < 60/*(int)points.size()*/; keypoint++)
+	//{
+	//	int counter = 0;
+	//	if (psi)
+	//	{
+	//		for (int i = 0; i < m; i++)
+	//		{
+	//			int index = counter + ((i + 0) % m);
+	//			//std::cout << index << std::endl;
+	//			aych[index] = CalculateBin(0, 0, i, m, n, psi, sigma, gradients, points[keypoint]);
+	//			//std::cout << aych[index] << std::endl;
+	//			//H[0][0][i] = aych[index];
+	//			//H[0][0][i] = CalculateBin(0, 0, i, m, n, sigma, gradients, points[keypoint]);
+	//		}
+	//		counter += m;
+	//	}
+	//	else
+	//	{
+	//		for (int d = 0; d < m; d++)
+	//		{
+	//			for (int i = 0; i < m; i++)
+	//			{
+	//				int index = counter + ((i + d) % m);
+	//				//std::cout << index << std::endl;
+	//				aych[index] = CalculateBin(0, d, i, m, n, psi, sigma, gradients, points[keypoint]);
+	//				//std::cout << aych[index] << std::endl;
+	//				//H[0][d][i] = aych[index];
+	//				//H[0][d][i] = CalculateBin(0, d, i, m, n, sigma, gradients, points[keypoint]);
 
-				}
-				counter += m;
-			}
-		}
-		else
-		{
-			for (int i = 0; i < m; i++)
-			{
-				int index = counter + ((i + 0) % m);
-				//std::cout << index << std::endl;
-				aych[index] = CalculateBin(0, 0, i, m, n, psi, sigma, gradients, points[keypoint]);
-				//std::cout << aych[index] << std::endl;
-				//H[0][0][i] = aych[index];
-				//H[0][0][i] = CalculateBin(0, 0, i, m, n, sigma, gradients, points[keypoint]);
-			}
-			counter += m;
-		}
+	//			}
+	//			counter += m;
+	//		}
+	//	}
 
-		for (int r = 1; r <= n; r++)
-		{
-			for (int d = 0; d < m; d++)
-			{
-				for (int i = 0; i < m; i++)
-				{
-					int index = counter + ((i + d) % m);
-					//std::cout << index << std::endl;
-					aych[index] = CalculateBin(r, d, i, m, n, true, sigma, gradients, points[keypoint]);
-					//std::cout << aych[index] << std::endl;
-					//H[r][d][i] = aych[index];
-					//H[r][d][i] = CalculateBin(r, d, i, m, n, sigma, gradients, points[keypoint]);
+	//	for (int r = 1; r <= n; r++)
+	//	{
+	//		for (int d = 0; d < m; d++)
+	//		{
+	//			for (int i = 0; i < m; i++)
+	//			{
+	//				int index = counter + ((i + d) % m);
+	//				//std::cout << index << std::endl;
+	//				aych[index] = CalculateBin(r, d, i, m, n, psi, sigma, gradients, points[keypoint]);
+	//				//std::cout << aych[index] << std::endl;
+	//				//H[r][d][i] = aych[index];
+	//				//H[r][d][i] = CalculateBin(r, d, i, m, n, sigma, gradients, points[keypoint]);
 
-				}
-				counter += m;
-			}
-		}
+	//			}
+	//			counter += m;
+	//		}
+	//	}
 
-		// reduce descriptor vector to unit length
-		double sum = 0;
-		for (int i = 0; i < length; i++)
-		{
-			sum += aych[i];
-		}
-		for (int i = 0; i < length; i++)
-		{
-			aych[i] = aych[i] * q / sum;
-			//std::cout << aych.at<double>(i) << std::endl;
-		}
-		double* singleDescriptor = descriptorsFinal.ptr<double>(keypoint);
-		singleDescriptor = aych;
-	}
-	std::cout << descriptorsFinal.row(59) << std::endl;
+	//	// reduce descriptor vector to unit length
+	//	double sum = 0;
+	//	for (int i = 0; i < length; i++)
+	//	{
+	//		sum += std::pow(aych[i], 2);
+	//	}
+	//	double norm = std::sqrt(sum);
+	//	for (int i = 0; i < length; i++)
+	//	{
+	//		aych[i] = aych[i] / norm;
+	//		//std::cout << aych.at<double>(i) << std::endl;
+	//	}
+	//}
+	Mat emm;
+	time_t start_sGLOH = std::time(NULL);
+	calculate_sGLOH_Descriptor(m, n, psi, sigma, gradients, points, emm);
+	time_t stop_sGLOH = std::time(NULL);
+	std::cout << "sGLOH took this long to compute alone:\t\t";
+	std::cout << (stop_sGLOH - start_sGLOH) << std::endl;
+	std::cout << "end of file";
+	//std::cout << descriptorsFinal.row(59) << std::endl;
     //Call the test function to make some good ol pyramids.
 	//test(img);
 }
