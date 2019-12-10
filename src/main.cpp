@@ -9,7 +9,7 @@
 #include <ctime>
 #include <iostream>
 
-#include "gloh.cpp"
+#include "kp.cpp"
 #include "sgloh.cpp"
 
 using namespace cv;
