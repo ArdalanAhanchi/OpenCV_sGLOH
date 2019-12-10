@@ -17,8 +17,8 @@ float sGLOH::CalculateBin(int r, int d, int i, int m, int n, bool psi, float sig
 {
 	// get the x and y ranges for the image patch around the keypoint
 	// floor the range borders if they exceed the bounds of the image
-	int xRange[] = { (int)std::floorf(origin.pt.x) - (int)(origin.size / 2), (int)std::floorf(origin.pt.x) + (int)(origin.size / 2) + 1 };
-	int yRange[] = { (int)std::floorf(origin.pt.y) - (int)(origin.size / 2), (int)std::floorf(origin.pt.y) + (int)(origin.size / 2) + 1 };
+	int xRange[] = { (int)std::floor(origin.pt.x) - (int)(origin.size / 2), (int)std::floor(origin.pt.x) + (int)(origin.size / 2) + 1 };
+	int yRange[] = { (int)std::floor(origin.pt.y) - (int)(origin.size / 2), (int)std::floor(origin.pt.y) + (int)(origin.size / 2) + 1 };
 
 
 	// limit operations to the current ring and slice
@@ -55,8 +55,8 @@ float sGLOH::CalculateBin(int r, int d, int i, int m, int n, bool psi, float sig
 //float sGLOH::CalculateBinPlus(int r, int d, int i, int m, int n, int v, bool psi, float sigma, Mat& gradients, KeyPoint origin)
 //{
 //	// get the x and y ranges for the image patch around the keypoint
-//	int xRange[] = { (int)std::floorf(origin.pt.x) - (int)(origin.size / 2), (int)std::floorf(origin.pt.x) + (int)(origin.size / 2) + 1 };
-//	int yRange[] = { (int)std::floorf(origin.pt.y) - (int)(origin.size / 2), (int)std::floorf(origin.pt.y) + (int)(origin.size / 2) + 1 };
+//	int xRange[] = { (int)std::floor(origin.pt.x) - (int)(origin.size / 2), (int)std::floor(origin.pt.x) + (int)(origin.size / 2) + 1 };
+//	int yRange[] = { (int)std::floor(origin.pt.y) - (int)(origin.size / 2), (int)std::floor(origin.pt.y) + (int)(origin.size / 2) + 1 };
 //
 //	int count = 0;
 //	float z = 2 * PI / m;
@@ -83,7 +83,7 @@ float sGLOH::CalculateBin(int r, int d, int i, int m, int n, bool psi, float sig
 //			{
 //
 //				float x = gradients.at<Vec2d>(j, k)[1];
-//				float xzfloor = (float)std::floorf((float)x / (float)z);
+//				float xzfloor = (float)std::floor((float)x / (float)z);
 //				float Sm = x - z * xzfloor;
 //				float mLine = z * i / v;
 //				float Mz = GetM(z, Sm - mLine);
@@ -111,7 +111,7 @@ void sGLOH::detectAndCompute(InputArray _image, std::vector<KeyPoint>& keypoints
 	}
 	else
 	{
-		
+
 	}
 	// get gradients from image
 	Mat greyscale;

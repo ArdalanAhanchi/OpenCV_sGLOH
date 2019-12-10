@@ -70,8 +70,7 @@ void SGlohKp::show(const Mat& img)
  *  @param sigma The base sigma which the image is blurred by in each level.
  */
 void SGlohKp::getSigmas(std::vector<pixType>& sigmas,
-                int levels,
-                double sigma = SGlohKp::DEFAULT_SIGMA)
+                int levels, double sigma)
 {
 
     //For the base image, just put a sigma level of 0 (not blurred).
@@ -132,7 +131,7 @@ void SGlohKp::blurLevels(Mat& src, std::vector<Mat>& dest, std::vector<pixType>&
 void SGlohKp::buildPyramid(Mat& src,
                     std::vector<std::vector<Mat>>& dest,
                     std::vector<double>& sigmas,
-                    int octaves = SGlohKp::DEFAULT_NUM_OCTAVES)
+                    int octaves)
  {
      //Get the minimum dimention of the source image.
      int maxOctaves = 0;
@@ -253,9 +252,7 @@ bool isExtreme(std::vector<Mat>& pyr, int r, int c, int lvl)
  *  @param numBins The total number of bins in the orientation histogram.
  */
 void SGlohKp::orientationHist(Mat& src, std::vector<double>& dest,
-                        int r, int c, double stdev,
-                        int radius,
-                        int numBins = SGlohKp::DEFAULT_HIST_BINS)
+                        int r, int c, double stdev, int radius, int numBins)
 {
     //Initialize the destination vector with the bins (Initially empty).
     for(int b = 0; b < numBins; b++)
@@ -305,7 +302,7 @@ void SGlohKp::orientationHist(Mat& src, std::vector<double>& dest,
  *  @param histogram The histogram which we're smoothing.
  *  @param multiplier The number of times tha the histogram is smoothed.
  */
-void SGlohKp::histogramGauss(std::vector<double>& histogram, int multiplier=1)
+void SGlohKp::histogramGauss(std::vector<double>& histogram, int multiplier)
 {
     //If multiplier was reuqested, smooth it a few times.
     for(int multi = 0; multi < multiplier; multi++)
@@ -344,7 +341,7 @@ void SGlohKp::histogramGauss(std::vector<double>& histogram, int multiplier=1)
  *  @param c The column for this keypoint within the matrix object.
  *  @return A keypoint object initialized with the correct parameters.
  */
-KeyPoint getKp(std::vector<std::vector<Mat>>& pyr, double sigma,
+KeyPoint SGlohKp::getKp(std::vector<std::vector<Mat>>& pyr, double sigma,
     int octave, int lvl, int r, int c)
 {
     //Calculate the scale for this keypoint based on sigma and blur leve.
@@ -419,8 +416,8 @@ bool isEdge(Mat& dog, int r, int c, pixType curve_threshold)
 void SGlohKp::findKeypoints(std::vector<std::vector<Mat>>& pyr,
                      std::vector<KeyPoint>& kp,
                      std::vector<pixType>& sigmas,
-                     pixType contrast_threshold=SGlohKp::DEFAULT_CONTRAST_THRESHOLD,
-                     pixType curve_threshold=SGlohKp::DEFAULT_CURVE_THRESHOLD);
+                     pixType contrast_threshold,
+                     pixType curve_threshold)
 {
      //Calculate the threshold based on the levels in each octave.
      pixType threshold = (contrast_threshold / 2.0) / sigmas.size();

@@ -144,7 +144,7 @@ public:
      *  @param lvl The current blur level for pixel we're examining.
      *  @return True if the current point is an extremum, false otherwise.
      */
-    bool isExtreme(std::vector<Mat>& pyr, int r, int c, int lvl);
+    static bool isExtreme(std::vector<Mat>& pyr, int r, int c, int lvl);
 
 
     /**
@@ -193,7 +193,7 @@ public:
      *  @param c The column for this keypoint within the matrix object.
      *  @return A keypoint object initialized with the correct parameters.
      */
-    KeyPoint getKp(std::vector<std::vector<Mat>>& pyr, double sigma,
+    static KeyPoint getKp(std::vector<std::vector<Mat>>& pyr, double sigma,
         int octave, int lvl, int r, int c);
 
 
@@ -210,7 +210,7 @@ public:
      *  @param curve_threshold The max ratio on the curves.
      *  @return True if the keypoint is edge like, false otherwise.
      */
-    bool isEdge(Mat& dog, int r, int c, pixType curve_threshold);
+    static bool isEdge(Mat& dog, int r, int c, pixType curve_threshold);
 
 
 

@@ -10,7 +10,6 @@
 #include <ctime>
 #include <iostream>
 
-#include "kp.cpp"
 #include "sgloh.cpp"
 
 using namespace cv;
@@ -28,7 +27,7 @@ int main(int argc, char** argv)
 	// second, each region is broken up into m histogram bins
 	// for each region R sub (r, d) where r is defined as the integer set from 1 to n and d is defined as the integer set from 0 to m - 1
 	// the ith histogram bin value h sub (r, d) is defined as
-	// sum for each pixel p in R sub (r, d) (Gm(p) * 
+	// sum for each pixel p in R sub (r, d) (Gm(p) *
 	Mat image = imread("foreground.jpg");
 	Mat testImage1 = imread("testImage1.jpg");
 	Mat testImage2 = imread("testImage2.jpg");
@@ -37,7 +36,7 @@ int main(int argc, char** argv)
 	//namedWindow("image");
 	//imshow("image", image);
 	//waitKey(0);
-	
+
 	const int n = 2;
 	const int m = 8;
 	float q = 1.0;
@@ -80,7 +79,7 @@ int main(int argc, char** argv)
 	//		float magnitude = std::rand() % 4 + ((float)(std::rand() % 100) / 100);
 	//		float orientation = (2 * PI / 360) * (std::rand() % 360 + ((float)(std::rand() % 100) / 100));
 	//		Vec2d current = Vec2d(magnitude, orientation);
-	//		
+	//
 	//		gradients.at<Vec2d>(y, x)[0] = current[0];
 	//		gradients.at<Vec2d>(y, x)[1] = current[1];
 	//	}
@@ -161,7 +160,7 @@ int main(int argc, char** argv)
 	std::cout << (stop_sGLOH - start_sGLOH) << std::endl;
 	std::cout << "end of file";
 	//std::vector<DMatch> matches;
-	
+
 	//for (int i = 0; i < emm1.rows; i++)
 	//{
 	//	DMatch curr = DMatch();
