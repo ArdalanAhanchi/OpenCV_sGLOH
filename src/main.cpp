@@ -10,7 +10,7 @@
 #include <ctime>
 #include <iostream>
 
-#include "sgloh.cpp"
+#include "sgloh.h"
 
 using namespace cv;
 
@@ -50,7 +50,7 @@ int main(int argc, char** argv)
 	//aych.create(length, 1, CV_64F);
 	std::vector<KeyPoint> points;
 	Ptr<xfeatures2d::SIFT> sift = xfeatures2d::SIFT::create(0, 3, 0.04, 10.0, sigma);
-	sGLOH* essGLOH = new sGLOH();
+	//sGLOH* essGLOH;// = new sGLOH();
 	sGLOH::sGLOH_Options options;
 	options.m = 8;
 	options.n = 2;
@@ -152,8 +152,8 @@ int main(int argc, char** argv)
 	Mat emm1, emm2;
 	std::vector<KeyPoint> tP1, tP2;
 	time_t start_sGLOH = std::time(NULL);
-	essGLOH->detectAndCompute(testImage1, tP1, emm1, options);
-	essGLOH->detectAndCompute(testImage2, tP2, emm2, options);
+	sGLOH::detectAndCompute(testImage1, tP1, emm1, options);
+	sGLOH::detectAndCompute(testImage2, tP2, emm2, options);
 	//calculate_sGLOH_Descriptor(m, n, psi, sigma, gradients, points, emm);
 	time_t stop_sGLOH = std::time(NULL);
 	std::cout << "sGLOH took this long to detect and compute:\t\t";
@@ -215,7 +215,7 @@ int main(int argc, char** argv)
 	imwrite("result3.jpg", matchedImage3);
 	imwrite("result4.jpg", matchedImage4);
 	imwrite("result5.jpg", matchedImage5);
-	delete essGLOH;
+//	delete essGLOH;
 	/*std::cout << descriptorsFinal.row(59) << std::endl;
     Call the test function to make some good ol pyramids.
 	test(img);*/

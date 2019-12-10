@@ -1,4 +1,6 @@
 #include "sgloh.h"
+#include "gradient.h"
+#include "kp.h"
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/xfeatures2d/nonfree.hpp>
@@ -105,32 +107,34 @@ void sGLOH::detectAndCompute(InputArray _image, std::vector<KeyPoint>& keypoints
 	if ((int) ksize < 1)
 	{
 		// get points first
-		Ptr<xfeatures2d::SIFT> sift = xfeatures2d::SIFT::create(0, 3, 0.04, 10.0, options.sigma);
-		Mat empty, unused;
-		sift->detectAndCompute(_image, empty, keypoints, unused);
+		//Ptr<xfeatures2d::SIFT> sift = xfeatures2d::SIFT::create(0, 3, 0.04, 10.0, options.sigma);
+		//Mat empty, unused;
+		//sift->detectAndCompute(_image, empty, keypoints, unused);
+		SGlohKp::detect(_image.getMat(), keypoints);
 	}
 	else
 	{
 
 	}
 	// get gradients from image
-	Mat greyscale;
-	cvtColor(_image, greyscale, COLOR_BGR2GRAY);
-	int dimensions[] = { _image.getMat().rows, _image.getMat().cols, 2 };
-	Mat gradients = Mat(3, dimensions, CV_32F, Scalar::all(0));
-	Mat dx, dy;
-	spatialGradient(greyscale, dx, dy);
-	for (int i = 0; i < gradients.rows; i++)
-	{
-		for (int j = 0; j < gradients.cols; j++)
-		{
-			int Gx = dx.at<int>(i, j);
-			int Gy = dy.at<int>(i, j);
-			gradients.at<float>(i, j, 0) = (float)std::sqrt(std::pow(Gx, 2) + std::pow(Gy, 2));
-			gradients.at<float>(i, j, 1) = (float)std::atan2(Gy, Gx);
-		}
-	}
-
+	//Mat greyscale;
+	//cvtColor(_image, greyscale, COLOR_BGR2GRAY);
+	//int dimensions[] = { _image.getMat().rows, _image.getMat().cols, 2 };
+	//Mat gradients = Mat(3, dimensions, CV_32F, Scalar::all(0));
+	//Mat dx, dy;
+	//spatialGradient(greyscale, dx, dy);
+	//for (int i = 0; i < gradients.rows; i++)
+	//{
+	//	for (int j = 0; j < gradients.cols; j++)
+	//	{
+	//		int Gx = dx.at<int>(i, j);
+	//		int Gy = dy.at<int>(i, j);
+	//		gradients.at<float>(i, j, 0) = (float)std::sqrt(std::pow(Gx, 2) + std::pow(Gy, 2));
+	//		gradients.at<float>(i, j, 1) = (float)std::atan2(Gy, Gx);
+	//	}
+	//}
+	Mat gradients;
+	SGlohGradient::findGradient(_image.getMat(), gradients);
 	calculate_sGLOH_Descriptor(options.m, options.n, options.psi, options.sigma, gradients, keypoints, _descriptors);
 }
 

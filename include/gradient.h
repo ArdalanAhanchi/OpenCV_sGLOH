@@ -17,7 +17,7 @@ class SGlohGradient
 
     /** The depth type corresponding to GR_PRIX_TYPE. */
     static const int GR_DEPTH_TYPE = CV_64F;
-
+public:
     /**
      *  A function which calculates gradient magnitudes and angles for the image,
      *  and writes them in a 3 dimentional matrix object. The gradients matrix will
