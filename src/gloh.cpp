@@ -21,7 +21,7 @@ const std::string SHOW_WINDOW_NAME = "Output" ;
 const int SCALE_FACTOR = 2 ;
 
 /** Factor used for blurring the image (sqrt(2) / 2 used as default). */
-const double BLUR_FACTOR = std::sqrt(2) / 2 ;
+const float BLUR_FACTOR = std::sqrt(2) / 2 ;
 
 /** Default level of scaled images (Based on the original SIFT paper). */
 const int DEFAULT_SCALE_LEVELS = 4 ;

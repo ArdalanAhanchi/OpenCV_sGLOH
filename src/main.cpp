@@ -39,14 +39,14 @@ int main(int argc, char** argv)
 	
 	const int n = 2;
 	const int m = 8;
-	double q = 1.0;
+	float q = 1.0;
 	const bool psi = false;
-	double radius = 7;
-	double sigma = 1.6;
-	//double H[n + 1][m][m];
+	float radius = 7;
+	float sigma = 1.6;
+	//float H[n + 1][m][m];
 	const int length = m * (m * n + 1 + (m - 1) * (psi ? 0 : 1));
-	//double aych[length];
-	//double aych[length];
+	//float aych[length];
+	//float aych[length];
 	//aych.create(length, 1, CV_64F);
 	std::vector<KeyPoint> points;
 	Ptr<xfeatures2d::SIFT> sift = xfeatures2d::SIFT::create(0, 3, 0.04, 10.0, sigma);
@@ -62,22 +62,22 @@ int main(int argc, char** argv)
 	Mat emptyMask;
 	// detectAndCompute instead of just detect to allow quality comparison between SIFT descriptor and sGLOH descriptor
 	time_t startSIFT = std::time(NULL);
-	sift->detectAndCompute(image, emptyMask, points, siftDescriptors);
+	sift->detectAndCompute(testImage1, emptyMask, points, siftDescriptors);
 	time_t stopSIFT = std::time(NULL);
 	std::cout << "SIFT took this long to detect and compute:\t\t";
 	std::cout << (stopSIFT - startSIFT) << std::endl;
 	std::srand(std::time(NULL));
 	Mat descriptorsFinal;
 	OutputArray descriptors = descriptorsFinal;
-	descriptors.create((int)points.size(), length, CV_64F);
+	descriptors.create((int)points.size(), length, CV_32F);
 	descriptorsFinal = descriptors.getMat();
 	Mat gradients = Mat(image.size(), CV_64FC2);
 	//for (int x = 0; x < gradients.cols; x++)
 	//{
 	//	for (int y = 0; y < gradients.rows; y++)
 	//	{
-	//		double magnitude = std::rand() % 4 + ((double)(std::rand() % 100) / 100);
-	//		double orientation = (2 * PI / 360) * (std::rand() % 360 + ((double)(std::rand() % 100) / 100));
+	//		float magnitude = std::rand() % 4 + ((float)(std::rand() % 100) / 100);
+	//		float orientation = (2 * PI / 360) * (std::rand() % 360 + ((float)(std::rand() % 100) / 100));
 	//		Vec2d current = Vec2d(magnitude, orientation);
 	//		
 	//		gradients.at<Vec2d>(y, x)[0] = current[0];
@@ -137,26 +137,84 @@ int main(int argc, char** argv)
 	//	}
 
 	//	// reduce descriptor vector to unit length
-	//	double sum = 0;
+	//	float sum = 0;
 	//	for (int i = 0; i < length; i++)
 	//	{
 	//		sum += std::pow(aych[i], 2);
 	//	}
-	//	double norm = std::sqrt(sum);
+	//	float norm = std::sqrt(sum);
 	//	for (int i = 0; i < length; i++)
 	//	{
 	//		aych[i] = aych[i] / norm;
-	//		//std::cout << aych.at<double>(i) << std::endl;
+	//		//std::cout << aych.at<float>(i) << std::endl;
 	//	}
 	//}
-	Mat emm;
+	Mat emm1, emm2;
+	std::vector<KeyPoint> tP1, tP2;
 	time_t start_sGLOH = std::time(NULL);
-	essGLOH->detectAndCompute(image, points, siftDescriptors, options);
+	essGLOH->detectAndCompute(testImage1, tP1, emm1, options);
+	essGLOH->detectAndCompute(testImage2, tP2, emm2, options);
 	//calculate_sGLOH_Descriptor(m, n, psi, sigma, gradients, points, emm);
 	time_t stop_sGLOH = std::time(NULL);
 	std::cout << "sGLOH took this long to detect and compute:\t\t";
 	std::cout << (stop_sGLOH - start_sGLOH) << std::endl;
 	std::cout << "end of file";
+	std::vector<DMatch> matches;
+	
+	for (int i = 0; i < emm1.rows; i++)
+	{
+		DMatch curr = DMatch();
+		curr.distance = 1000000;
+		for (int j = 0; j < emm2.rows; j++)
+		{
+			// get distance
+			float sumSquares = 0;
+			for (int k = 0; k < emm1.cols; k++)
+			{
+				sumSquares += std::pow(emm1.at<float>(i, k) - emm2.at<float>(j, k), 2);
+			}
+			float tempDistance = std::sqrt(sumSquares);
+			if (tempDistance < curr.distance)
+			{
+				curr.distance = tempDistance;
+				curr.queryIdx = i;
+				curr.trainIdx = j;
+			}
+		}
+		if (curr.distance < 1000000)
+		{
+			matches.push_back(curr);
+		}
+	}
+	/*Ptr<BFMatcher> bruteForceMatcher = BFMatcher::create();
+	std::vector<std::vector<DMatch>> matches;
+	bruteForceMatcher->knnMatch(emm1, emm2, matches, 5);
+	Mat matchedImage1, matchedImage2, matchedImage3, matchedImage4, matchedImage5;
+	drawMatches(testImage1, tP1, testImage2, tP2, matches[0], matchedImage1);
+	imshow("matches1", matchedImage1);
+	namedWindow("matches1", WINDOW_NORMAL);
+	waitKey(0);
+	drawMatches(testImage1, tP1, testImage2, tP2, matches[1], matchedImage2);
+	imshow("matches2", matchedImage2);
+	namedWindow("matches2", WINDOW_NORMAL);
+	waitKey(0);
+	drawMatches(testImage1, tP1, testImage2, tP2, matches[2], matchedImage3);
+	imshow("matches3", matchedImage3);
+	namedWindow("matches3", WINDOW_NORMAL);
+	waitKey(0);
+	drawMatches(testImage1, tP1, testImage2, tP2, matches[3], matchedImage4);
+	imshow("matches4", matchedImage4);
+	namedWindow("matches4", WINDOW_NORMAL);
+	waitKey(0);
+	drawMatches(testImage1, tP1, testImage2, tP2, matches[3], matchedImage5);
+	imshow("matches5", matchedImage5);
+	namedWindow("matches5", WINDOW_NORMAL);
+	waitKey(0);
+	imwrite("result1.jpg", matchedImage1);
+	imwrite("result2.jpg", matchedImage2);
+	imwrite("result3.jpg", matchedImage3);
+	imwrite("result4.jpg", matchedImage4);
+	imwrite("result5.jpg", matchedImage5);*/
 	delete essGLOH;
 	//std::cout << descriptorsFinal.row(59) << std::endl;
     //Call the test function to make some good ol pyramids.
