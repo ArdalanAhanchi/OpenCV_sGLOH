@@ -1,8 +1,11 @@
 #include "sgloh.h"
 #include <opencv2/core.hpp>
-//#include <opencv2/highgui.hpp>
-//#include <opencv2/xfeatures2d/nonfree.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/xfeatures2d/nonfree.hpp>
+#include <opencv2/imgproc.hpp>
 #include <cmath>
+using namespace cv;
+
 float sGLOH::GetM(float q, float x)
 {
 	if (x < q / 2)
@@ -49,51 +52,51 @@ float sGLOH::CalculateBin(int r, int d, int i, int m, int n, bool psi, float sig
 }
 
 //non-functional
-float sGLOH::CalculateBinPlus(int r, int d, int i, int m, int n, int v, bool psi, float sigma, Mat& gradients, KeyPoint origin)
-{
-	// get the x and y ranges for the image patch around the keypoint
-	int xRange[] = { (int)std::floorf(origin.pt.x) - (int)(origin.size / 2), (int)std::floorf(origin.pt.x) + (int)(origin.size / 2) + 1 };
-	int yRange[] = { (int)std::floorf(origin.pt.y) - (int)(origin.size / 2), (int)std::floorf(origin.pt.y) + (int)(origin.size / 2) + 1 };
-
-	int count = 0;
-	float z = 2 * PI / m;
-	float sigmaC = sigma / (2 * PI / m);
-	float sigmaLine = (z / v) * sigmaC;
-	// limit operations to the current ring and slice
-	float ringStart = r * (origin.size / 2) / (n + 1);
-	float ringEnd = (r + 1) * (origin.size / 2) / (n + 1);
-	float sliceStart = d * 2 * PI / m;
-	float sliceEnd = (d + 1) * 2 * PI / m;
-	if (psi && r == 0 && d == 0)
-	{
-		sliceStart = 0;
-		sliceEnd = 2 * PI;
-	}
-	float result = 0;
-	for (int k = xRange[0]; k <= xRange[1]; k++)
-	{
-		for (int j = yRange[0]; j <= yRange[1]; j++)
-		{
-			float rho = (std::sqrt((pow((float)k - (float)origin.pt.x, 2) + pow((float)j - (float)origin.pt.y, 2))));
-			float theta = std::atan2((float)j - (float)origin.pt.y, (float)k - (float)origin.pt.x) + PI;
-			if (rho > ringStart&& rho <= ringEnd && theta > sliceStart&& theta <= sliceEnd)
-			{
-
-				float x = gradients.at<Vec2d>(j, k)[1];
-				float xzfloor = (float)std::floorf((float)x / (float)z);
-				float Sm = x - z * xzfloor;
-				float mLine = z * i / v;
-				float Mz = GetM(z, Sm - mLine);
-				float power = -std::pow(Mz, 2) / std::pow(2 * sigmaLine, 2);
-
-				result += gradients.at<Vec2d>(j, k)[0] * std::exp(power);
-				count++;
-			}
-		}
-	}
-	result *= (1 / std::sqrt(2 * PI) * sigmaLine);
-	return result;
-}
+//float sGLOH::CalculateBinPlus(int r, int d, int i, int m, int n, int v, bool psi, float sigma, Mat& gradients, KeyPoint origin)
+//{
+//	// get the x and y ranges for the image patch around the keypoint
+//	int xRange[] = { (int)std::floorf(origin.pt.x) - (int)(origin.size / 2), (int)std::floorf(origin.pt.x) + (int)(origin.size / 2) + 1 };
+//	int yRange[] = { (int)std::floorf(origin.pt.y) - (int)(origin.size / 2), (int)std::floorf(origin.pt.y) + (int)(origin.size / 2) + 1 };
+//
+//	int count = 0;
+//	float z = 2 * PI / m;
+//	float sigmaC = sigma / (2 * PI / m);
+//	float sigmaLine = (z / v) * sigmaC;
+//	// limit operations to the current ring and slice
+//	float ringStart = r * (origin.size / 2) / (n + 1);
+//	float ringEnd = (r + 1) * (origin.size / 2) / (n + 1);
+//	float sliceStart = d * 2 * PI / m;
+//	float sliceEnd = (d + 1) * 2 * PI / m;
+//	if (psi && r == 0 && d == 0)
+//	{
+//		sliceStart = 0;
+//		sliceEnd = 2 * PI;
+//	}
+//	float result = 0;
+//	for (int k = xRange[0]; k <= xRange[1]; k++)
+//	{
+//		for (int j = yRange[0]; j <= yRange[1]; j++)
+//		{
+//			float rho = (std::sqrt((pow((float)k - (float)origin.pt.x, 2) + pow((float)j - (float)origin.pt.y, 2))));
+//			float theta = std::atan2((float)j - (float)origin.pt.y, (float)k - (float)origin.pt.x) + PI;
+//			if (rho > ringStart&& rho <= ringEnd && theta > sliceStart&& theta <= sliceEnd)
+//			{
+//
+//				float x = gradients.at<Vec2d>(j, k)[1];
+//				float xzfloor = (float)std::floorf((float)x / (float)z);
+//				float Sm = x - z * xzfloor;
+//				float mLine = z * i / v;
+//				float Mz = GetM(z, Sm - mLine);
+//				float power = -std::pow(Mz, 2) / std::pow(2 * sigmaLine, 2);
+//
+//				result += gradients.at<Vec2d>(j, k)[0] * std::exp(power);
+//				count++;
+//			}
+//		}
+//	}
+//	result *= (1 / std::sqrt(2 * PI) * sigmaLine);
+//	return result;
+//}
 
 void sGLOH::detectAndCompute(InputArray _image, std::vector<KeyPoint>& keypoints, OutputArray _descriptors, sGLOH_Options options)
 {
@@ -123,8 +126,8 @@ void sGLOH::detectAndCompute(InputArray _image, std::vector<KeyPoint>& keypoints
 		{
 			int Gx = dx.at<int>(i, j);
 			int Gy = dy.at<int>(i, j);
-			gradients.at<float>(i, j, 0) = std::sqrt(std::pow(Gx, 2) + std::pow(Gy, 2));
-			gradients.at<float>(i, j, 1) = std::atan2(Gy, Gx);
+			gradients.at<float>(i, j, 0) = (float)std::sqrt(std::pow(Gx, 2) + std::pow(Gy, 2));
+			gradients.at<float>(i, j, 1) = (float)std::atan2(Gy, Gx);
 		}
 	}
 

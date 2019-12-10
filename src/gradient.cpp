@@ -2,18 +2,7 @@
 // It is subject to the license terms in the LICENSE file found in the top-level directory
 // of this distribution and at http://opencv.org/license.html.
 
-#include <opencv2/core.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/imgproc.hpp>
-#include <stdexcept>
-
-using namespace cv;
-
-/** The type which is used when accessing the matrices. */
-typedef double GR_PIX_TYPE;
-
-/** The depth type corresponding to GR_PRIX_TYPE. */
-const int GR_DEPTH_TYPE = CV_64F;
+#include "gradient.h"
 
 /**
  *  A function which calculates gradient magnitudes and angles for the image,
@@ -24,16 +13,16 @@ const int GR_DEPTH_TYPE = CV_64F;
  *  @param src The image which we're calculating the gradients for.
  *  @param gradients The mat object where we'll write the gradient information.
  */
-void findGradient(Mat& src, Mat& gradients)
+void SGlohGradient::findGradient(cv::Mat& src, cv::Mat& gradients)
 {
     //Use the sobel operator to calculate gradients at x and y dirs.
-    Mat x, y;
-    Sobel(src, gx, GR_DEPTH_TYPE, 1, 0, 1);
-    Sobel(src, gy, GR_DEPTH_TYPE, 0, 1, 1);
+    cv::Mat x, y;
+    cv::Sobel(src, x, GR_DEPTH_TYPE, 1, 0, 1);
+    cv::Sobel(src, y, GR_DEPTH_TYPE, 0, 1, 1);
 
-    //Find gradient magnitude (by gx, and gy). And find it's angles.
-    Mat magnitudes, angles;
-    cartToPolar(gx, gy, magnitudes, angles, 1);
+    //Find gradient magnitude (by x, and y). And find it's angles.
+    cv::Mat magnitudes, angles;
+    cv::cartToPolar(x, y, magnitudes, angles, 1);
 
     //Go through the row and columns and populate the vec2d's.
     for(int r = 0; r < src.rows; r++)

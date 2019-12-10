@@ -5,6 +5,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/xfeatures2d/nonfree.hpp>
+#include <opencv2/imgproc.hpp>
 #include <cmath>
 #include <ctime>
 #include <iostream>
@@ -67,11 +68,11 @@ int main(int argc, char** argv)
 	std::cout << "SIFT took this long to detect and compute:\t\t";
 	std::cout << (stopSIFT - startSIFT) << std::endl;
 	std::srand(std::time(NULL));
-	Mat descriptorsFinal;
-	OutputArray descriptors = descriptorsFinal;
-	descriptors.create((int)points.size(), length, CV_32F);
-	descriptorsFinal = descriptors.getMat();
-	Mat gradients = Mat(image.size(), CV_64FC2);
+	//Mat descriptorsFinal;
+	//OutputArray descriptors = descriptorsFinal;
+	//descriptors.create((int)points.size(), length, CV_32F);
+	//descriptorsFinal = descriptors.getMat();
+	//Mat gradients = Mat(image.size(), CV_64FC2);
 	//for (int x = 0; x < gradients.cols; x++)
 	//{
 	//	for (int y = 0; y < gradients.rows; y++)
@@ -159,38 +160,38 @@ int main(int argc, char** argv)
 	std::cout << "sGLOH took this long to detect and compute:\t\t";
 	std::cout << (stop_sGLOH - start_sGLOH) << std::endl;
 	std::cout << "end of file";
-	std::vector<DMatch> matches;
+	//std::vector<DMatch> matches;
 	
-	for (int i = 0; i < emm1.rows; i++)
-	{
-		DMatch curr = DMatch();
-		curr.distance = 1000000;
-		for (int j = 0; j < emm2.rows; j++)
-		{
-			// get distance
-			float sumSquares = 0;
-			for (int k = 0; k < emm1.cols; k++)
-			{
-				sumSquares += std::pow(emm1.at<float>(i, k) - emm2.at<float>(j, k), 2);
-			}
-			float tempDistance = std::sqrt(sumSquares);
-			if (tempDistance < curr.distance)
-			{
-				curr.distance = tempDistance;
-				curr.queryIdx = i;
-				curr.trainIdx = j;
-			}
-		}
-		if (curr.distance < 1000000)
-		{
-			matches.push_back(curr);
-		}
-	}
-	/*Ptr<BFMatcher> bruteForceMatcher = BFMatcher::create();
+	//for (int i = 0; i < emm1.rows; i++)
+	//{
+	//	DMatch curr = DMatch();
+	//	curr.distance = 1000000;
+	//	for (int j = 0; j < emm2.rows; j++)
+	//	{
+	//		// get distance
+	//		float sumSquares = 0;
+	//		for (int k = 0; k < emm1.cols; k++)
+	//		{
+	//			sumSquares += std::pow(emm1.at<float>(i, k) - emm2.at<float>(j, k), 2);
+	//		}
+	//		float tempDistance = std::sqrt(sumSquares);
+	//		if (tempDistance < curr.distance)
+	//		{
+	//			curr.distance = tempDistance;
+	//			curr.queryIdx = i;
+	//			curr.trainIdx = j;
+	//		}
+	//	}
+	//	if (curr.distance < 1000000)
+	//	{
+	//		matches.push_back(curr);
+	//	}
+	//}
+	Ptr<BFMatcher> bruteForceMatcher = BFMatcher::create();
 	std::vector<std::vector<DMatch>> matches;
 	bruteForceMatcher->knnMatch(emm1, emm2, matches, 5);
 	Mat matchedImage1, matchedImage2, matchedImage3, matchedImage4, matchedImage5;
-	drawMatches(testImage1, tP1, testImage2, tP2, matches[0], matchedImage1);
+	drawMatches(testImage1, tP1, testImage2, tP2, matches, matchedImage1);
 	imshow("matches1", matchedImage1);
 	namedWindow("matches1", WINDOW_NORMAL);
 	waitKey(0);
@@ -206,7 +207,7 @@ int main(int argc, char** argv)
 	imshow("matches4", matchedImage4);
 	namedWindow("matches4", WINDOW_NORMAL);
 	waitKey(0);
-	drawMatches(testImage1, tP1, testImage2, tP2, matches[3], matchedImage5);
+	drawMatches(testImage1, tP1, testImage2, tP2, matches[4], matchedImage5);
 	imshow("matches5", matchedImage5);
 	namedWindow("matches5", WINDOW_NORMAL);
 	waitKey(0);
@@ -214,9 +215,9 @@ int main(int argc, char** argv)
 	imwrite("result2.jpg", matchedImage2);
 	imwrite("result3.jpg", matchedImage3);
 	imwrite("result4.jpg", matchedImage4);
-	imwrite("result5.jpg", matchedImage5);*/
+	imwrite("result5.jpg", matchedImage5);
 	delete essGLOH;
-	//std::cout << descriptorsFinal.row(59) << std::endl;
-    //Call the test function to make some good ol pyramids.
-	//test(img);
+	/*std::cout << descriptorsFinal.row(59) << std::endl;
+    Call the test function to make some good ol pyramids.
+	test(img);*/
 }

@@ -2,53 +2,13 @@
 // It is subject to the license terms in the LICENSE file found in the top-level directory
 // of this distribution and at http://opencv.org/license.html.
 
-#include <opencv2/core.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/imgproc.hpp>
-//#include <opencv2/features2d.hpp>
-#include <opencv2/xfeatures2d.hpp>
-#include <opencv2/xfeatures2d/nonfree.hpp>
-#include <opencv2/core/traits.hpp>
-#include <cmath>
-#include <iostream>
-#include <string>
-#include <vector>
-#include <stdexcept>
+#include "kp.h"
 
 using namespace cv;
 
 typedef double pixType;
-const int DEPTH_TYPE = CV_64F;
 
-/** Name of the window which is displayed when the show method is called.*/
-const std::string SHOW_WINDOW_NAME = "Output" ;
-
-/** Number used to divide the image (each octave) when scaling.*/
-const int SCALE_FACTOR = 2 ;
-
-/** Default level of scaled images (Based on the original SIFT paper). */
-const int DEFAULT_NUM_OCTAVES = 4 ;
-
-/** Default number of blurred images (Based on the original SIFT paper). */
-const int DEFAULT_BLUR_LEVELS = 5 ;
-
-/** Default base sigma used for blurring within the scalespaces. */
-const double DEFAULT_SIGMA = 1.6;
-
-/** Default threshold used for minimum contrast when finding keypoints. */
-const pixType DEFAULT_CONTRAST_THRESHOLD = 0.04;
-
-/** Default minimum contrast for the curret pixel to filter it. */
-const pixType DEFAULT_CURVE_THRESHOLD = 10.0;
-
-/** Rotation calculation disbaled by default since it's not required by sGLOH. */
-const bool CALC_ROTATION = false;
-
-/** Default number of bins in the orientation histogram. */
-const int DEFAULT_HIST_BINS = 36;
-
-/** Default multiplier used for smoothing the orientation histogram. */
-const int DEFAULT_HIST_SMOOTHING_MULTI = 2;
+const std::string SGlohKp::SHOW_WINDOW_NAME = "Output";
 
 
 /**
@@ -57,17 +17,17 @@ const int DEFAULT_HIST_SMOOTHING_MULTI = 2;
  *
  *  @param images A vector of all the vectors at different scales of image.
  */
-void show(const std::vector<std::vector<Mat>>& images)
+void SGlohKp::show(const std::vector<std::vector<Mat>>& images)
 {
     //Create a window for the output images.
-    namedWindow(SHOW_WINDOW_NAME, WINDOW_NORMAL);
+    namedWindow(SGlohKp::SHOW_WINDOW_NAME, WINDOW_NORMAL);
 
     //Iterate through the pyramid.
     for(std::vector<Mat> scales : images)     //Go through all scale levels.
     {
         for(Mat img : scales)                 //Go through blurred images in scales.
         {
-            imshow(SHOW_WINDOW_NAME, img);    //Display the current image.
+            imshow(SGlohKp::SHOW_WINDOW_NAME, img);    //Display the current image.
             waitKey(0);                       //Wait for user input to terminate.
         }
     }
@@ -79,7 +39,7 @@ void show(const std::vector<std::vector<Mat>>& images)
  *
  *  @param img A vector of matrix objects which we want to display on the screen.
  */
-void show(const std::vector<Mat>& images)
+void SGlohKp::show(const std::vector<Mat>& images)
 {
     std::vector<std::vector<Mat>> scale;
     scale.push_back(images);
@@ -92,7 +52,7 @@ void show(const std::vector<Mat>& images)
  *
  *  @param img A matrix object which we want to display on the screen.
  */
-void show(const Mat& img)
+void SGlohKp::show(const Mat& img)
 {
     std::vector<Mat> images;
     images.push_back(img);
@@ -109,9 +69,9 @@ void show(const Mat& img)
  *  @param level The number of blur levels in total.
  *  @param sigma The base sigma which the image is blurred by in each level.
  */
-void getSigmas(std::vector<pixType>& sigmas,
-                int levels = DEFAULT_BLUR_LEVELS,
-                double sigma = DEFAULT_SIGMA)
+void SGlohKp::getSigmas(std::vector<pixType>& sigmas,
+                int levels,
+                double sigma = SGlohKp::DEFAULT_SIGMA)
 {
 
     //For the base image, just put a sigma level of 0 (not blurred).
@@ -141,7 +101,7 @@ void getSigmas(std::vector<pixType>& sigmas,
  *  @param dest Empty destination vector which will be filled out with the images.
  *  @param sigmas The sigmas for each level of the pyramid (Starting with base).
  */
-void blurLevels(Mat& src, std::vector<Mat>& dest, std::vector<pixType>& sigmas)
+void SGlohKp::blurLevels(Mat& src, std::vector<Mat>& dest, std::vector<pixType>& sigmas)
 {
     //Add the original source image to the base of the pyramid.
     //The first image should not be blurred (blurSigmas[0] is not used).
@@ -169,17 +129,17 @@ void blurLevels(Mat& src, std::vector<Mat>& dest, std::vector<pixType>& sigmas)
  *  @param sigmas The sigma amount used in each octave's scalespace.
  *  @param octaves The number of octaves in the destination vector.
  */
- void buildPyramid(Mat& src,
+void SGlohKp::buildPyramid(Mat& src,
                     std::vector<std::vector<Mat>>& dest,
                     std::vector<double>& sigmas,
-                    int octaves = DEFAULT_NUM_OCTAVES)
+                    int octaves = SGlohKp::DEFAULT_NUM_OCTAVES)
  {
      //Get the minimum dimention of the source image.
      int maxOctaves = 0;
      int minSize = (src.rows < src.cols ? src.rows : src.cols);
 
      //Calculate the maximum number of scales possible for this source image.
-     while(minSize > std::pow(SCALE_FACTOR, maxOctaves))
+     while(minSize > std::pow(SGlohKp::SCALE_FACTOR, maxOctaves))
          maxOctaves++;
 
      //Check for invalid number of scales.
@@ -194,7 +154,8 @@ void blurLevels(Mat& src, std::vector<Mat>& dest, std::vector<pixType>& sigmas)
      //Build the pyramid.
      for(int i = 1; i < octaves; i++) {
          //Calculate new size based on the scaling factor.
-         Size s(dest[i - 1][0].cols / SCALE_FACTOR, dest[i - 1][0].rows / SCALE_FACTOR);
+         Size s(dest[i - 1][0].cols / SGlohKp::SCALE_FACTOR,
+             dest[i - 1][0].rows / SGlohKp::SCALE_FACTOR);
 
          //Calculate the scaled image (nearest neighbor interpolation)
          Mat scaled;
@@ -215,7 +176,7 @@ void blurLevels(Mat& src, std::vector<Mat>& dest, std::vector<pixType>& sigmas)
  *  @param src The pyramid with the various scale, and blur levels.
  *  @param dest The output pyramid which will be filed various scales, and DoG.
  */
-void buildDoG(std::vector<std::vector<Mat>>& src, std::vector<std::vector<Mat>>& dest)
+void SGlohKp::buildDoG(std::vector<std::vector<Mat>>& src, std::vector<std::vector<Mat>>& dest)
 {
     //Go through all the octaves in the source.
     for(std::vector<Mat> octaves : src)
@@ -291,10 +252,10 @@ bool isExtreme(std::vector<Mat>& pyr, int r, int c, int lvl)
  *  @param radius The radius of matrix which the histogram is calculated at.
  *  @param numBins The total number of bins in the orientation histogram.
  */
-void orientationHist(Mat& src, std::vector<double>& dest,
+void SGlohKp::orientationHist(Mat& src, std::vector<double>& dest,
                         int r, int c, double stdev,
                         int radius,
-                        int numBins = DEFAULT_HIST_BINS)
+                        int numBins = SGlohKp::DEFAULT_HIST_BINS)
 {
     //Initialize the destination vector with the bins (Initially empty).
     for(int b = 0; b < numBins; b++)
@@ -344,7 +305,7 @@ void orientationHist(Mat& src, std::vector<double>& dest,
  *  @param histogram The histogram which we're smoothing.
  *  @param multiplier The number of times tha the histogram is smoothed.
  */
-void histogramGauss(std::vector<double>& histogram, int multiplier=1)
+void SGlohKp::histogramGauss(std::vector<double>& histogram, int multiplier=1)
 {
     //If multiplier was reuqested, smooth it a few times.
     for(int multi = 0; multi < multiplier; multi++)
@@ -390,7 +351,7 @@ KeyPoint getKp(std::vector<std::vector<Mat>>& pyr, double sigma,
     double scale = sigma * pow(2.0, octave + (lvl / pyr[octave].size()));
 
     //Not needed(used) in sGLOH, so disabled by default to improve performance.
-    if(CALC_ROTATION)
+    if(SGlohKp::CALC_ROTATION)
     {
         //Calculate the dominant orientation.
         std::vector<double> hist;
@@ -455,11 +416,11 @@ bool isEdge(Mat& dog, int r, int c, pixType curve_threshold)
  *  @param contrast_threashold The min contrast for the curret pixel to filter it.
  *  @param curve_threshold The max ratio on the curves.
  */
-void findKeypoints(std::vector<std::vector<Mat>>& pyr,
-                    std::vector<KeyPoint>& kp,
-                    std::vector<pixType>& sigmas,
-                    pixType contrast_threshold=DEFAULT_CONTRAST_THRESHOLD,
-                    pixType curve_threshold=DEFAULT_CURVE_THRESHOLD)
+void SGlohKp::findKeypoints(std::vector<std::vector<Mat>>& pyr,
+                     std::vector<KeyPoint>& kp,
+                     std::vector<pixType>& sigmas,
+                     pixType contrast_threshold=SGlohKp::DEFAULT_CONTRAST_THRESHOLD,
+                     pixType curve_threshold=SGlohKp::DEFAULT_CURVE_THRESHOLD);
 {
      //Calculate the threshold based on the levels in each octave.
      pixType threshold = (contrast_threshold / 2.0) / sigmas.size();
@@ -505,7 +466,7 @@ void findKeypoints(std::vector<std::vector<Mat>>& pyr,
  *  @param src The source image which we're calculating these for.
  *  @param dest The output vector which the keypoint will be written to.
  */
-void detect(Mat& src, std::vector<KeyPoint>& dest)
+void SGlohKp::detect(Mat& src, std::vector<KeyPoint>& dest)
 {
     //Convert to grayscale if needed.
     Mat orig;
@@ -516,7 +477,7 @@ void detect(Mat& src, std::vector<KeyPoint>& dest)
 
     //Change color space to the right depth.
     Mat img;
-    orig.convertTo(img, DEPTH_TYPE, 1.0/255.0);
+    orig.convertTo(img, SGlohKp::DEPTH_TYPE, 1.0/255.0);
 
     //Get the sigmas for each level of scalespace.
     std::vector<pixType> sigmas;
@@ -550,7 +511,7 @@ void detect(Mat& src, std::vector<KeyPoint>& dest)
  *  A test function just for making sure the algorithms above work. It is
  *  currently called by the main method.
  */
-void test()
+void SGlohKp::test()
 {
     //Generate a test image
     Mat orig=Mat::zeros(1000,1000,CV_8U);
