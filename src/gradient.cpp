@@ -4,6 +4,9 @@
 
 #include "gradient.h"
 
+namespace SGloh
+{
+
 /**
  *  A function which calculates gradient magnitudes and angles for the image,
  *  and writes them in a 3 dimentional matrix object. The gradients matrix will
@@ -13,7 +16,7 @@
  *  @param src The image which we're calculating the gradients for.
  *  @param gradients The mat object where we'll write the gradient information.
  */
-void SGlohGradient::findGradient(cv::Mat& src, cv::Mat& gradients)
+void findGradient(cv::Mat& src, cv::Mat& gradients)
 {
     //Use the sobel operator to calculate gradients at x and y dirs.
     cv::Mat x, y;
@@ -27,6 +30,8 @@ void SGlohGradient::findGradient(cv::Mat& src, cv::Mat& gradients)
     //Go through the row and columns and populate the vec2d's.
     for(int r = 0; r < src.rows; r++)
         for(int c = 0; c < src.cols; c++)
-            gradients.at<Vec2d>(r,c) = Vec2d(magnitudes.at<GR_PIX_TYPE>(r,c),
+            gradients.at<cv::Vec2d>(r,c) = cv::Vec2d(magnitudes.at<GR_PIX_TYPE>(r,c),
                                                 angles.at<GR_PIX_TYPE>(r,c));
+}
+
 }

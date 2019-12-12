@@ -1,22 +1,24 @@
 #include "sgloh.h"
-#include "sGLOH_Options.h"
 #include "gradient.h"
 #include "kp.h"
+
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/xfeatures2d/nonfree.hpp>
 #include <opencv2/imgproc.hpp>
 #include <cmath>
-using namespace cv;
 
-float sGLOH::GetM(float q, float x)
+namespace SGloh
+{
+
+float GetM(float q, float x)
 {
 	if (x < q / 2)
 		return x;
 	return q - x;
 }
 
-float sGLOH::CalculateBin(int r, int d, int i, int m, int n, bool psi, float sigma, Mat& gradients, KeyPoint origin)
+float CalculateBin(int r, int d, int i, int m, int n, bool psi, float sigma, cv::Mat& gradients, cv::KeyPoint origin)
 {
 	// get the x and y ranges for the image patch around the keypoint
 	// floor the range borders if they exceed the bounds of the image
@@ -55,7 +57,7 @@ float sGLOH::CalculateBin(int r, int d, int i, int m, int n, bool psi, float sig
 }
 
 //non-functional
-//float sGLOH::CalculateBinPlus(int r, int d, int i, int m, int n, int v, bool psi, float sigma, Mat& gradients, KeyPoint origin)
+//float CalculateBinPlus(int r, int d, int i, int m, int n, int v, bool psi, float sigma, cv::Mat& gradients, cv::KeyPoint origin)
 //{
 //	// get the x and y ranges for the image patch around the keypoint
 //	int xRange[] = { (int)std::floor(origin.pt.x) - (int)(origin.size / 2), (int)std::floor(origin.pt.x) + (int)(origin.size / 2) + 1 };
@@ -101,7 +103,7 @@ float sGLOH::CalculateBin(int r, int d, int i, int m, int n, bool psi, float sig
 //	return result;
 //}
 
-void sGLOH::detectAndCompute(InputArray _image, std::vector<KeyPoint>& keypoints, OutputArray _descriptors, int m, int n, bool psi, float sigma/*sGLOH_Options options*/)
+void detectAndCompute(cv::Mat& _image, std::vector<cv::KeyPoint>& keypoints, cv::OutputArray _descriptors, sGLOH_Options options)
 {
 
 	size_t ksize = keypoints.size();
@@ -109,20 +111,20 @@ void sGLOH::detectAndCompute(InputArray _image, std::vector<KeyPoint>& keypoints
 	{
 		// get points first
 		//Ptr<xfeatures2d::SIFT> sift = xfeatures2d::SIFT::create(0, 3, 0.04, 10.0, options.sigma);
-		//Mat empty, unused;
+		//cv::Mat empty, unused;
 		//sift->detectAndCompute(_image, empty, keypoints, unused);
-		SGlohKp::detect(_image.getMat(), keypoints);
+		detect(_image, keypoints);
 	}
 	else
 	{
 
 	}
 	// get gradients from image
-	//Mat greyscale;
+	//cv::Mat greyscale;
 	//cvtColor(_image, greyscale, COLOR_BGR2GRAY);
 	//int dimensions[] = { _image.getMat().rows, _image.getMat().cols, 2 };
-	//Mat gradients = Mat(3, dimensions, CV_32F, Scalar::all(0));
-	//Mat dx, dy;
+	//cv::Mat gradients = cv::Mat(3, dimensions, CV_32F, Scalar::all(0));
+	//cv::Mat dx, dy;
 	//spatialGradient(greyscale, dx, dy);
 	//for (int i = 0; i < gradients.rows; i++)
 	//{
@@ -134,14 +136,14 @@ void sGLOH::detectAndCompute(InputArray _image, std::vector<KeyPoint>& keypoints
 	//		gradients.at<float>(i, j, 1) = (float)std::atan2(Gy, Gx);
 	//	}
 	//}
-	Mat gradients;
-	SGlohGradient::findGradient(_image.getMat(), gradients);
-	calculate_sGLOH_Descriptor(m, n, psi, sigma, gradients, keypoints, _descriptors);
+	cv::Mat gradients;
+	findGradient(_image, gradients);
+	calculate_sGLOH_Descriptor(options.m, options.n, options.psi, options.sigma, gradients, keypoints, _descriptors);
 }
 
-void sGLOH::calculate_sGLOH_Descriptor(int m, int n, bool psi, float sigma, Mat& gradients, std::vector<KeyPoint>& keypoints, OutputArray _descriptors)
+void calculate_sGLOH_Descriptor(int m, int n, bool psi, float sigma, cv::Mat& gradients, std::vector<cv::KeyPoint>& keypoints, cv::OutputArray _descriptors)
 {
-	Mat descriptors;
+	cv::Mat descriptors;
 
 	// number of floats the descriptor consists of
 	int length = m * (m * n + 1 + (m - 1) * (psi ? 0 : 1));
@@ -204,89 +206,10 @@ void sGLOH::calculate_sGLOH_Descriptor(int m, int n, bool psi, float sigma, Mat&
 	}
 }
 
-void sGLOH::rotateDescriptors(Mat descriptors, Mat& rotated, int m, int n, bool psi, float sigma)
-{
-	if (m > 1)
-	{
-		for (int i = 0; i < descriptors.rows; i++)
-		{
-			int indexCounter = 0;
-			int length = m * (m * n + 1 + (m - 1) * (psi ? 0 : 1));
-
-			float* centralRegion = new float[m];
-			int rings = n;
-			if (!psi)
-			{
-				rings++;
-			}
-			float*** outerRegions = new float** [rings];
-			for (int j = 0; j < rings; j++)
-			{
-				outerRegions[j] = new float* [m];
-				for (int k = 0; k < m; k++)
-				{
-					outerRegions[j][k] = new float[m];
-				}
-			}
-			int start = 0;
-			if (psi)
-			{
-				for (int j = 0; j < m; j++)
-				{
-					centralRegion[(j + 1) % m] = descriptors.at<float>(i, j);
-				}
-				for (int j = 0; j < m; j++)
-				{
-					descriptors.at<float>(i, j) = centralRegion[j];
-				}
-				start = m;
-			}
-			int tempJ = start;
-			for (int j = 0; j < rings; j++)
-			{
-				for (int k = 0; k < m; k++)
-				{
-					for (int l = 0; l < m; l++)
-					{
-						outerRegions[j][(k + 1) % m][l] = descriptors.at<float>(i, tempJ++);
-					}
-				}
-			}
-			tempJ = start;
-			for (int j = 0; j < rings; j++)
-			{
-				for (int k = 0; k < m; k++)
-				{
-					for (int l = 0; l < m; l++)
-					{
-						descriptors.at<float>(i, tempJ++) = outerRegions[j][k][l];
-					}
-				}
-			}
-			for (int j = 0; j < rings; j++)
-			{
-				for (int k = 0; k < m; k++)
-				{
-					delete[] outerRegions[j][k];
-				}
-				delete[] outerRegions[j];
-			}
-			delete[] outerRegions;
-			delete[] centralRegion;
-		}
-	}
-}
-
-
-sGLOH::sGLOH()
-{
-}
-
-sGLOH::~sGLOH()
-{
-}
-//Ptr<sGLOH> sGLOH::create(int _nfeatures, int _nOctaveLayers,
+//Ptr<sGLOH> create(int _nfeatures, int _nOctaveLayers,
 //	float _contrastThreshold, float _edgeThreshold, float _sigma)
 //{
 //	return makePtr<sGLOH>(_nfeatures, _nOctaveLayers, _contrastThreshold, _edgeThreshold, _sigma);
 //}
+
+}
