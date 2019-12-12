@@ -206,6 +206,79 @@ void calculate_sGLOH_Descriptor(int m, int n, bool psi, float sigma, cv::Mat& gr
 	}
 }
 
+void rotateDescriptors(cv::Mat descriptors, cv::Mat& rotated, sGLOH_Options options)
+{
+	if (options.m > 1)
+	{
+		for (int i = 0; i < descriptors.rows; i++)
+		{
+			int indexCounter = 0;
+			int length = options.m * (options.m * options.n + 1 + (options.m - 1) * (options.psi ? 0 : 1));
+
+			float* centralRegion = new float[options.m];
+			int rings = options.n;
+			if (!options.psi)
+			{
+				rings++;
+			}
+			float*** outerRegions = new float** [rings];
+			for (int j = 0; j < rings; j++)
+			{
+				outerRegions[j] = new float* [options.m];
+				for (int k = 0; k < options.m; k++)
+				{
+					outerRegions[j][k] = new float[options.m];
+				}
+			}
+			int start = 0;
+			if (options.psi)
+			{
+				for (int j = 0; j < options.m; j++)
+				{
+					centralRegion[(j + 1) % options.m] = descriptors.at<float>(i, j);
+				}
+				for (int j = 0; j < options.m; j++)
+				{
+					descriptors.at<float>(i, j) = centralRegion[j];
+				}
+				start = options.m;
+			}
+			int tempJ = start;
+			for (int j = 0; j < rings; j++)
+			{
+				for (int k = 0; k < options.m; k++)
+				{
+					for (int l = 0; l < options.m; l++)
+					{
+						outerRegions[j][(k + 1) % options.m][l] = descriptors.at<float>(i, tempJ++);
+					}
+				}
+			}
+			tempJ = start;
+			for (int j = 0; j < rings; j++)
+			{
+				for (int k = 0; k < options.m; k++)
+				{
+					for (int l = 0; l < options.m; l++)
+					{
+						descriptors.at<float>(i, tempJ++) = outerRegions[j][k][l];
+					}
+				}
+			}
+			for (int j = 0; j < rings; j++)
+			{
+				for (int k = 0; k < options.m; k++)
+				{
+					delete[] outerRegions[j][k];
+				}
+				delete[] outerRegions[j];
+			}
+			delete[] outerRegions;
+			delete[] centralRegion;
+		}
+	}
+}
+
 //Ptr<sGLOH> create(int _nfeatures, int _nOctaveLayers,
 //	float _contrastThreshold, float _edgeThreshold, float _sigma)
 //{
