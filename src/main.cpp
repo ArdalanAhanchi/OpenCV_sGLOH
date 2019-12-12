@@ -31,14 +31,23 @@ int main(int argc, char** argv)
 	// the ith histogram bin value h sub (r, d) is defined as
 	// sum for each pixel p in R sub (r, d) (Gm(p) *
 	Mat image = imread("foreground.jpg");
-	Mat testImage1 = imread("QuarterTestImage1.jpg");
-	Mat testImage2 = imread("QuarterTestImage2.jpg");
-	Mat testImage3 = imread("QuarterTestImage3.jpg");
-	Mat testImage4 = imread("QuarterTestImage4.jpg");
+	Mat testImage1 = imread("SixteenthTestImage1.jpg");
+	Mat testImage2 = imread("SixteenthTestImage2.jpg");
+	Mat testImage3 = imread("SixteenthTestImage3.jpg");
+	Mat testImage4 = imread("SixteenthTestImage4.jpg");
 	//namedWindow("image");
 	//imshow("image", image);
 	//waitKey(0);
+	//Mat nuTest1, nuTest2, nuTest3, nuTest4;
+	//pyrDown(testImage1, nuTest1);
+	//pyrDown(testImage2, nuTest2);
+	//pyrDown(testImage3, nuTest3);
+	//pyrDown(testImage4, nuTest4);
 
+	//imwrite("SixteenthTestImage1.jpg", nuTest1);
+	//imwrite("SixteenthTestImage2.jpg", nuTest2);
+	//imwrite("SixteenthTestImage3.jpg", nuTest3);
+	//imwrite("SixteenthTestImage4.jpg", nuTest4);
 	const int n = 2;
 	const int m = 8;
 	float q = 1.0;
@@ -80,7 +89,7 @@ int main(int argc, char** argv)
 	std::cout << "sGLOH took this long to detect and compute:\t\t";
 	std::cout << (stop_sGLOH - start_sGLOH) << std::endl;
 	time_t start_Match = std::time(NULL);
-	Ptr<BFMatcher> bruteForceMatcher = BFMatcher::create();
+	//Ptr<BFMatcher> bruteForceMatcher = BFMatcher::create();
 	std::vector<std::vector<DMatch>> matches;
 	matches.resize((size_t)options.m);
 	size_t sizeSum = 0;
@@ -116,6 +125,7 @@ int main(int argc, char** argv)
 		}
 		rotateDescriptors(emm1.clone(), emm1, options);
 	}
+	std::vector<DMatch> goodMatches;
 	std::vector<DMatch> bestMatches;
 	//bestMatches.resize(sizeSum);
 	int i = 0;
@@ -129,16 +139,35 @@ int main(int argc, char** argv)
 				for (int m = 0; m < (int)matches[l].size(); m++)
 				{
 					if (curr.queryIdx == matches[l][m].queryIdx &&
-						matches[l][m].distance <= curr.distance)
+						matches[l][m].distance < curr.distance)
 					{
 						curr = matches[l][m];
 					}
 				}
 			}
-			if (curr.distance >= 0)
+			if (curr.distance >= 0 &&
+				curr.distance < 0.25f)
 			{
-				bestMatches.push_back(curr);
+				goodMatches.push_back(curr);
 			}
+		}
+	}
+	for (int i = 0; i < goodMatches.size(); i++)
+	{
+		DMatch curr = goodMatches[i];
+		bool duplicate = false;
+		for (int k = 0; k < bestMatches.size(); k++)
+		{
+			if (bestMatches[k].queryIdx == goodMatches[i].queryIdx &&
+				bestMatches[k].trainIdx == goodMatches[i].trainIdx &&
+				std::abs(bestMatches[k].distance - goodMatches[i].distance) < 0.1)
+			{
+				duplicate = true;
+			}
+		}
+		if (!duplicate)
+		{
+			bestMatches.push_back(curr);
 		}
 	}
 	time_t stop_Match = std::time(NULL);
@@ -169,7 +198,7 @@ int main(int argc, char** argv)
 	//imshow("matches5", matchedImage5);
 	//namedWindow("matches5", WINDOW_NORMAL);
 	//waitKey(0);
-	imwrite("result1.jpg", matchedImage1);
+	imwrite("result1-2.jpg", matchedImage1);
 	//imwrite("result2.jpg", matchedImage2);
 	//imwrite("result3.jpg", matchedImage3);
 	//imwrite("result4.jpg", matchedImage4);
