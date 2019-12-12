@@ -11,6 +11,9 @@
 #include <iostream>
 
 #include "sgloh.h"
+#include "sGLOH_Options.h"
+#include "kp.h"
+#include "gradient.h"
 
 using namespace cv;
 
@@ -29,14 +32,13 @@ int main(int argc, char** argv)
 	// the ith histogram bin value h sub (r, d) is defined as
 	// sum for each pixel p in R sub (r, d) (Gm(p) *
 	Mat image = imread("foreground.jpg");
-	Mat testImage1 = imread("testImage1.jpg");
-	Mat testImage2 = imread("testImage2.jpg");
+	Mat testImage1 = imread("foreground.jpg");
+	Mat testImage2 = imread("foreground.jpg");
 	Mat testImage3 = imread("testImage3.jpg");
 	Mat testImage4 = imread("testImage4.jpg");
 	//namedWindow("image");
 	//imshow("image", image);
 	//waitKey(0);
-
 	const int n = 2;
 	const int m = 8;
 	float q = 1.0;
@@ -51,12 +53,8 @@ int main(int argc, char** argv)
 	std::vector<KeyPoint> points;
 	Ptr<xfeatures2d::SIFT> sift = xfeatures2d::SIFT::create(0, 3, 0.04, 10.0, sigma);
 	//sGLOH* essGLOH;// = new sGLOH();
-	sGLOH::sGLOH_Options options;
-	options.m = 8;
-	options.n = 2;
-	options.psi = false;
-	options.v = 0;
-	options.sigma = 0.7;
+	//sGLOH_Options options;
+	//options.setOptions(8, 2, 0, false, 0.7f);
 	/*sift->detect(image, points);*/
 	Mat siftDescriptors;
 	Mat emptyMask;
@@ -152,8 +150,8 @@ int main(int argc, char** argv)
 	Mat emm1, emm2;
 	std::vector<KeyPoint> tP1, tP2;
 	time_t start_sGLOH = std::time(NULL);
-	sGLOH::detectAndCompute(testImage1, tP1, emm1, options);
-	sGLOH::detectAndCompute(testImage2, tP2, emm2, options);
+	sGLOH::detectAndCompute(testImage1, tP1, emm1, m, n, psi, sigma);
+	sGLOH::detectAndCompute(testImage2, tP2, emm2, m, n, psi, sigma);
 	//calculate_sGLOH_Descriptor(m, n, psi, sigma, gradients, points, emm);
 	time_t stop_sGLOH = std::time(NULL);
 	std::cout << "sGLOH took this long to detect and compute:\t\t";
@@ -186,35 +184,103 @@ int main(int argc, char** argv)
 	//		matches.push_back(curr);
 	//	}
 	//}
+	time_t start_Match = std::time(NULL);
 	Ptr<BFMatcher> bruteForceMatcher = BFMatcher::create();
 	std::vector<std::vector<DMatch>> matches;
-	bruteForceMatcher->knnMatch(emm1, emm2, matches, 5);
+	matches.resize((size_t)m);
+	size_t sizeSum = 0;
+	for (int h = 0; h < m; h++)
+	{
+		//bruteForceMatcher->match(emm1, emm2, matches[i]);
+		for (int i = 0; i < emm1.rows; i++)
+		{
+			DMatch curr = DMatch();
+			curr.distance = 1000000;
+			for (int j = 0; j < emm2.rows; j++)
+			{
+				// get distance
+				float sumSquares = 0;
+				for (int k = 0; k < emm1.cols; k++)
+				{
+					float testF1 = emm1.at<float>(i, k);
+					float testF2 = emm2.at<float>(j, k);
+					sumSquares += std::pow(emm1.at<float>(i, k) - emm2.at<float>(j, k), 2);
+				}
+				float tempDistance = std::sqrt(sumSquares);
+				if (tempDistance < curr.distance)
+				{
+					curr.distance = tempDistance;
+					curr.queryIdx = i;
+					curr.trainIdx = j;
+				}
+			}
+			if (curr.distance < 1000000)
+			{
+				matches[h].push_back(curr);
+			}
+		}
+		sGLOH::rotateDescriptors(emm1.clone(), emm1, m, n, psi, sigma);
+	}
+	std::vector<DMatch> bestMatches;
+	//bestMatches.resize(sizeSum);
+	int i = 0;
+	for (int j = 0; j < m; j++)
+	{
+		for (int k = 0; k < (int)matches[j].size(); k++)
+		{
+			DMatch curr(matches[j][k]);
+			for (int l = j + 1; l < m; l++)
+			{
+				for (int m = 0; m < (int)matches[l].size(); m++)
+				{
+					if (curr.queryIdx == matches[l][m].queryIdx &&
+						curr.trainIdx == matches[l][m].trainIdx &&
+						matches[l][m] < curr)
+					{
+						curr = matches[l][m];
+					}
+				}
+			}
+			if (curr.distance >= 0)
+			{
+				bestMatches.push_back(curr);
+			}
+		}
+	}
+	time_t stop_Match = std::time(NULL);
+	std::cout << "Brute force matching took this long:\t\t";
+	std::cout << (stop_Match - start_Match) << std::endl;
+	std::cout << "end of file";
+
+	//Ptr<BFMatcher> bruteForceMatcher = BFMatcher::create();
+	//std::vector<std::vector<DMatch>> matches;
+	//bruteForceMatcher->knnMatch(emm1, emm2, matches, 5);
 	Mat matchedImage1, matchedImage2, matchedImage3, matchedImage4, matchedImage5;
-	drawMatches(testImage1, tP1, testImage2, tP2, matches, matchedImage1);
+	drawMatches(testImage1, tP1, testImage2, tP2, bestMatches, matchedImage1);
 	imshow("matches1", matchedImage1);
 	namedWindow("matches1", WINDOW_NORMAL);
 	waitKey(0);
-	drawMatches(testImage1, tP1, testImage2, tP2, matches[1], matchedImage2);
-	imshow("matches2", matchedImage2);
-	namedWindow("matches2", WINDOW_NORMAL);
-	waitKey(0);
-	drawMatches(testImage1, tP1, testImage2, tP2, matches[2], matchedImage3);
-	imshow("matches3", matchedImage3);
-	namedWindow("matches3", WINDOW_NORMAL);
-	waitKey(0);
-	drawMatches(testImage1, tP1, testImage2, tP2, matches[3], matchedImage4);
-	imshow("matches4", matchedImage4);
-	namedWindow("matches4", WINDOW_NORMAL);
-	waitKey(0);
-	drawMatches(testImage1, tP1, testImage2, tP2, matches[4], matchedImage5);
-	imshow("matches5", matchedImage5);
-	namedWindow("matches5", WINDOW_NORMAL);
-	waitKey(0);
+	//drawMatches(testImage1, tP1, testImage2, tP2, matches[1], matchedImage2);
+	//imshow("matches2", matchedImage2);
+	//namedWindow("matches2", WINDOW_NORMAL);
+	//waitKey(0);
+	//drawMatches(testImage1, tP1, testImage2, tP2, matches[2], matchedImage3);
+	//imshow("matches3", matchedImage3);
+	//namedWindow("matches3", WINDOW_NORMAL);
+	//waitKey(0);
+	//drawMatches(testImage1, tP1, testImage2, tP2, matches[3], matchedImage4);
+	//imshow("matches4", matchedImage4);
+	//namedWindow("matches4", WINDOW_NORMAL);
+	//waitKey(0);
+	//drawMatches(testImage1, tP1, testImage2, tP2, matches[4], matchedImage5);
+	//imshow("matches5", matchedImage5);
+	//namedWindow("matches5", WINDOW_NORMAL);
+	//waitKey(0);
 	imwrite("result1.jpg", matchedImage1);
-	imwrite("result2.jpg", matchedImage2);
-	imwrite("result3.jpg", matchedImage3);
-	imwrite("result4.jpg", matchedImage4);
-	imwrite("result5.jpg", matchedImage5);
+	//imwrite("result2.jpg", matchedImage2);
+	//imwrite("result3.jpg", matchedImage3);
+	//imwrite("result4.jpg", matchedImage4);
+	//imwrite("result5.jpg", matchedImage5);
 //	delete essGLOH;
 	/*std::cout << descriptorsFinal.row(59) << std::endl;
     Call the test function to make some good ol pyramids.

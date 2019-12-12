@@ -1,4 +1,5 @@
 #include "sgloh.h"
+#include "sGLOH_Options.h"
 #include "gradient.h"
 #include "kp.h"
 #include <opencv2/core.hpp>
@@ -100,7 +101,7 @@ float sGLOH::CalculateBin(int r, int d, int i, int m, int n, bool psi, float sig
 //	return result;
 //}
 
-void sGLOH::detectAndCompute(InputArray _image, std::vector<KeyPoint>& keypoints, OutputArray _descriptors, sGLOH_Options options)
+void sGLOH::detectAndCompute(InputArray _image, std::vector<KeyPoint>& keypoints, OutputArray _descriptors, int m, int n, bool psi, float sigma/*sGLOH_Options options*/)
 {
 
 	size_t ksize = keypoints.size();
@@ -135,7 +136,7 @@ void sGLOH::detectAndCompute(InputArray _image, std::vector<KeyPoint>& keypoints
 	//}
 	Mat gradients;
 	SGlohGradient::findGradient(_image.getMat(), gradients);
-	calculate_sGLOH_Descriptor(options.m, options.n, options.psi, options.sigma, gradients, keypoints, _descriptors);
+	calculate_sGLOH_Descriptor(m, n, psi, sigma, gradients, keypoints, _descriptors);
 }
 
 void sGLOH::calculate_sGLOH_Descriptor(int m, int n, bool psi, float sigma, Mat& gradients, std::vector<KeyPoint>& keypoints, OutputArray _descriptors)
@@ -202,6 +203,81 @@ void sGLOH::calculate_sGLOH_Descriptor(int m, int n, bool psi, float sigma, Mat&
 		}
 	}
 }
+
+void sGLOH::rotateDescriptors(Mat descriptors, Mat& rotated, int m, int n, bool psi, float sigma)
+{
+	if (m > 1)
+	{
+		for (int i = 0; i < descriptors.rows; i++)
+		{
+			int indexCounter = 0;
+			int length = m * (m * n + 1 + (m - 1) * (psi ? 0 : 1));
+
+			float* centralRegion = new float[m];
+			int rings = n;
+			if (!psi)
+			{
+				rings++;
+			}
+			float*** outerRegions = new float** [rings];
+			for (int j = 0; j < rings; j++)
+			{
+				outerRegions[j] = new float* [m];
+				for (int k = 0; k < m; k++)
+				{
+					outerRegions[j][k] = new float[m];
+				}
+			}
+			int start = 0;
+			if (psi)
+			{
+				for (int j = 0; j < m; j++)
+				{
+					centralRegion[(j + 1) % m] = descriptors.at<float>(i, j);
+				}
+				for (int j = 0; j < m; j++)
+				{
+					descriptors.at<float>(i, j) = centralRegion[j];
+				}
+				start = m;
+			}
+			int tempJ = start;
+			for (int j = 0; j < rings; j++)
+			{
+				for (int k = 0; k < m; k++)
+				{
+					for (int l = 0; l < m; l++)
+					{
+						outerRegions[j][(k + 1) % m][l] = descriptors.at<float>(i, tempJ++);
+					}
+				}
+			}
+			tempJ = start;
+			for (int j = 0; j < rings; j++)
+			{
+				for (int k = 0; k < m; k++)
+				{
+					for (int l = 0; l < m; l++)
+					{
+						descriptors.at<float>(i, tempJ++) = outerRegions[j][k][l];
+					}
+				}
+			}
+			for (int j = 0; j < rings; j++)
+			{
+				for (int k = 0; k < m; k++)
+				{
+					delete[] outerRegions[j][k];
+				}
+				delete[] outerRegions[j];
+			}
+			delete[] outerRegions;
+			delete[] centralRegion;
+		}
+	}
+}
+
+
 sGLOH::sGLOH()
 {
 }
