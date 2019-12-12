@@ -24,9 +24,9 @@ struct sGLOH_Options
 	float sigma; // sigma value to force
 };
 
-void detectAndCompute(cv::Mat& _image, std::vector<cv::KeyPoint>& keypoints, cv::OutputArray _descriptors, sGLOH_Options options);
-void calculate_sGLOH_Descriptor(int m, int n, bool psi, float sigma, cv::Mat& gradients, std::vector<cv::KeyPoint>& keypoints, cv::OutputArray _descriptors);
-void calculate_sGLOH_Plus_Descriptor(int m, int n, int v, bool psi, float sigma, cv::Mat& gradients, std::vector<cv::KeyPoint>& keypoints, cv::OutputArray _descriptors);
+void detectAndCompute(cv::Mat& _image, std::vector<cv::KeyPoint>& keypoints, cv::Mat& _descriptors, sGLOH_Options options);
+void calculate_sGLOH_Descriptor(int m, int n, bool psi, float sigma, cv::Mat& gradients, std::vector<cv::KeyPoint>& keypoints, cv::Mat& _descriptors);
+void calculate_sGLOH_Plus_Descriptor(int m, int n, int v, bool psi, float sigma, cv::Mat& gradients, std::vector<cv::KeyPoint>& keypoints, cv::Mat& _descriptors);
 void rotateDescriptors(cv::Mat descriptors, cv::Mat& rotated, sGLOH_Options options);
 /*static Ptr<sGLOH> create(int _nfeatures = 0, int _nOctaveLayers = 3,
 	float _contrastThreshold = 0.04, float _edgeThreshold = 10.0, float _sigma = 0.7);*/

@@ -31,10 +31,10 @@ int main(int argc, char** argv)
 	// the ith histogram bin value h sub (r, d) is defined as
 	// sum for each pixel p in R sub (r, d) (Gm(p) *
 	Mat image = imread("foreground.jpg");
-	Mat testImage1 = imread("foreground.jpg");
-	Mat testImage2 = imread("foreground.jpg");
-	Mat testImage3 = imread("testImage3.jpg");
-	Mat testImage4 = imread("testImage4.jpg");
+	Mat testImage1 = imread("QuarterTestImage1.jpg");
+	Mat testImage2 = imread("QuarterTestImage2.jpg");
+	Mat testImage3 = imread("QuarterTestImage3.jpg");
+	Mat testImage4 = imread("QuarterTestImage4.jpg");
 	//namedWindow("image");
 	//imshow("image", image);
 	//waitKey(0);
@@ -58,7 +58,7 @@ int main(int argc, char** argv)
 	options.n = 2;
 	options.psi = false;
 	options.v = 0;
-	options.sigma = 0.7;
+	options.sigma = 1.6;
 	/*sift->detect(image, points);*/
 	Mat siftDescriptors;
 	Mat emptyMask;
@@ -79,34 +79,6 @@ int main(int argc, char** argv)
 	time_t stop_sGLOH = std::time(NULL);
 	std::cout << "sGLOH took this long to detect and compute:\t\t";
 	std::cout << (stop_sGLOH - start_sGLOH) << std::endl;
-	std::cout << "end of file";
-	//std::vector<DMatch> matches;
-
-	//for (int i = 0; i < emm1.rows; i++)
-	//{
-	//	DMatch curr = DMatch();
-	//	curr.distance = 1000000;
-	//	for (int j = 0; j < emm2.rows; j++)
-	//	{
-	//		// get distance
-	//		float sumSquares = 0;
-	//		for (int k = 0; k < emm1.cols; k++)
-	//		{
-	//			sumSquares += std::pow(emm1.at<float>(i, k) - emm2.at<float>(j, k), 2);
-	//		}
-	//		float tempDistance = std::sqrt(sumSquares);
-	//		if (tempDistance < curr.distance)
-	//		{
-	//			curr.distance = tempDistance;
-	//			curr.queryIdx = i;
-	//			curr.trainIdx = j;
-	//		}
-	//	}
-	//	if (curr.distance < 1000000)
-	//	{
-	//		matches.push_back(curr);
-	//	}
-	//}
 	time_t start_Match = std::time(NULL);
 	Ptr<BFMatcher> bruteForceMatcher = BFMatcher::create();
 	std::vector<std::vector<DMatch>> matches;
@@ -114,7 +86,7 @@ int main(int argc, char** argv)
 	size_t sizeSum = 0;
 	for (int h = 0; h < options.m; h++)
 	{
-		//bruteForceMatcher->match(emm1, emm2, matches[i]);
+		//bruteForceMatcher->match(emm1, emm2, matches[h]);
 		for (int i = 0; i < emm1.rows; i++)
 		{
 			DMatch curr = DMatch();
@@ -157,8 +129,7 @@ int main(int argc, char** argv)
 				for (int m = 0; m < (int)matches[l].size(); m++)
 				{
 					if (curr.queryIdx == matches[l][m].queryIdx &&
-						curr.trainIdx == matches[l][m].trainIdx &&
-						matches[l][m] < curr)
+						matches[l][m].distance <= curr.distance)
 					{
 						curr = matches[l][m];
 					}

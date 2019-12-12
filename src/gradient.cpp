@@ -25,13 +25,19 @@ void findGradient(cv::Mat& src, cv::Mat& gradients)
 
     //Find gradient magnitude (by x, and y). And find it's angles.
     cv::Mat magnitudes, angles;
-    cv::cartToPolar(x, y, magnitudes, angles, 1);
-
+    cv::cartToPolar(x, y, magnitudes, angles, false);
+	int dimensions[] = { src.rows, src.cols, 2 };
+	gradients = cv::Mat(3, dimensions, CV_32F, cv::Scalar::all(0));
     //Go through the row and columns and populate the vec2d's.
-    for(int r = 0; r < src.rows; r++)
-        for(int c = 0; c < src.cols; c++)
-            gradients.at<cv::Vec2d>(r,c) = cv::Vec2d(magnitudes.at<GR_PIX_TYPE>(r,c),
-                                                angles.at<GR_PIX_TYPE>(r,c));
+	for (int r = 0; r < src.rows; r++)
+	{
+		for (int c = 0; c < src.cols; c++)
+		{
+			gradients.at<float>(r, c, 0) = (float)magnitudes.at<GR_PIX_TYPE>(r, c);
+			gradients.at<float>(r, c, 1) = (float)angles.at<GR_PIX_TYPE>(r, c);
+
+		}
+	}
 }
 
 }

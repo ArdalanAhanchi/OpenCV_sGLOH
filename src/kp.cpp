@@ -492,8 +492,8 @@ void detect(cv::Mat& src, std::vector<cv::KeyPoint>& dest)
     buildDoG(pyr, dog);
 
     //Display the pyramids to the screen (For testing).
-    show(pyr);
-    show(dog);
+    //show(pyr);
+    //show(dog);
 
     //Calculate the maxima to find keypoints (And filter them).
     findKeypoints(dog, dest, sigmas);
