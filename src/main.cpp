@@ -10,7 +10,9 @@
 #include <ctime>
 #include <iostream>
 
-#include "sgloh.h"
+#include "sgloh.cpp"
+#include "gradient.cpp"
+#include "kp.cpp"
 
 using namespace cv;
 
@@ -51,7 +53,7 @@ int main(int argc, char** argv)
 	std::vector<KeyPoint> points;
 	Ptr<xfeatures2d::SIFT> sift = xfeatures2d::SIFT::create(0, 3, 0.04, 10.0, sigma);
 	//sGLOH* essGLOH;// = new sGLOH();
-	sGLOH::sGLOH_Options options;
+	SGloh::sGLOH_Options options;
 	options.m = 8;
 	options.n = 2;
 	options.psi = false;
@@ -152,8 +154,8 @@ int main(int argc, char** argv)
 	Mat emm1, emm2;
 	std::vector<KeyPoint> tP1, tP2;
 	time_t start_sGLOH = std::time(NULL);
-	sGLOH::detectAndCompute(testImage1, tP1, emm1, options);
-	sGLOH::detectAndCompute(testImage2, tP2, emm2, options);
+	SGloh::detectAndCompute(testImage1, tP1, emm1, options);
+	SGloh::detectAndCompute(testImage2, tP2, emm2, options);
 	//calculate_sGLOH_Descriptor(m, n, psi, sigma, gradients, points, emm);
 	time_t stop_sGLOH = std::time(NULL);
 	std::cout << "sGLOH took this long to detect and compute:\t\t";
