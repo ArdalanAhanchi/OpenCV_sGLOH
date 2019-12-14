@@ -1,7 +1,3 @@
-// This file is part of OpenCV project.
-// It is subject to the license terms in the LICENSE file found in the top-level directory
-// of this distribution and at http://opencv.org/license.html.
-
 #include "kp.h"
 
 namespace SGloh
@@ -342,7 +338,6 @@ cv::KeyPoint getKp(std::vector<std::vector<cv::Mat>>& pyr, double sigma,
 {
     //Calculate the scale for this keypoint based on sigma and blur leve.
     double scale = sigma * pow(2.0, octave + (lvl / pyr[octave].size()));
-    std::cout << "Scale is: " << scale << std::endl;
 
     //Not needed(used) in sGLOH, so disabled by default to improve performance.
     if(CALC_ROTATION)
@@ -395,7 +390,7 @@ bool isEdge(cv::Mat& dog, int r, int c, pixType curve_threshold)
         return false;
 
     //If we get here, then the keypoint is on an edge.
-    return true;
+    return false;
 }
 
 
@@ -439,12 +434,11 @@ void findKeypoints(std::vector<std::vector<cv::Mat>>& pyr,
                     if(isExtreme(pyr[octave], r, c, lvl))
                     {
                         //Check if this keypoint is on an edge, reject if it is.
-                        //if(isEdge(pyr[octave][lvl], r, c, curve_threshold))
-                        //    continue;
+                        if(isEdge(pyr[octave][lvl], r, c, curve_threshold))
+                            continue;
 
                         //Create a keypoint with at this position with the sigma.
                         //The angle and response are set to default (To be calculated).
-                        std::cerr << "Keypoint added at: " << r << " " << c << " " << octave << std::endl;
                         kp.push_back(getKp(pyr, sigmas[lvl], octave, lvl, r, c));
                     }
                 }
@@ -531,17 +525,6 @@ void test()
         for(int j = originD; j < originD + size; j++)
             orig.at<uchar>(i,j) = 0;
 
-    //for(int i = 800; i < 820; i++)
-    //    for(int j = 800; j < 820; j++)
-    //        orig.at<uchar>(i,j) = 0;
-
-
-    //Sift keypoint detection for comparison.
-    //cv::Ptr<xfeatures2d::SIFT> detector = xfeatures2d::SIFT::create();
-    //std::vector<cv::KeyPoint> keypoints;
-    //detector->detect(orig, keypoints);
-    //std::cerr << keypoints.size() << " KeyPoints found by sift." << std::endl;
-
     //Calculate the keypoints using the implemented method.
     std::vector<cv::KeyPoint> kp;
     detect(orig, kp);
@@ -549,10 +532,6 @@ void test()
     cv::Mat next;
     cv::drawKeypoints(orig, kp, next, cv::Scalar(0,0,255));
     show(next);
-
-    //cv::Mat nextTwo;
-    //cv::drawKeypoints(orig, keypoints, nextTwo, cv::Scalar(255,0,0));
-    //show(nextTwo);
 
     std::cerr << kp.size() << " KeyPoints found by sgloh." << std::endl;
 }

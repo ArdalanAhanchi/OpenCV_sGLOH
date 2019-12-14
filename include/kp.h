@@ -1,11 +1,6 @@
-// This file is part of OpenCV project.
-// It is subject to the license terms in the LICENSE file found in the top-level directory
-// of this distribution and at http://opencv.org/license.html.
-
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
-//#include <opencv2/features2d.hpp>
 #include <opencv2/xfeatures2d.hpp>
 #include <opencv2/xfeatures2d/nonfree.hpp>
 #include <opencv2/core/traits.hpp>
@@ -15,8 +10,8 @@
 #include <vector>
 #include <stdexcept>
 
-#ifndef KeyPoint_H
-#define KeyPoint_H
+#ifndef SGLOH_KP_H
+#define SGLOH_KP_H
 
 namespace SGloh
 {

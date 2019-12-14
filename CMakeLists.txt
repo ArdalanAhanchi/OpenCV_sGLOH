@@ -20,6 +20,7 @@ add_executable( OpenCV_sGLOH ./src/main.cpp
 			     ./src/gradient.cpp
 			     ./src/kp.cpp
 			     ./src/options.cpp
-			     ./src/sgloh.cpp )
+			     ./src/sgloh.cpp
+                 ./src/matcher.cpp )
 
 target_link_libraries( OpenCV_sGLOH ${OpenCV_LIBS} )
