@@ -37,10 +37,10 @@ const int DEFAULT_NUM_OCTAVES = 4;
 const int DEFAULT_BLUR_LEVELS = 5;
 
 /** Default base sigma used for blurring within the scalespaces. */
-const double DEFAULT_SIGMA = 1.6;
+const double DEFAULT_SIGMA = 1.2; //1.6;
 
 /** Default threshold used for minimum contrast when finding keypoints. */
-const pixType DEFAULT_CONTRAST_THRESHOLD = 0.04;
+const pixType DEFAULT_CONTRAST_THRESHOLD = 0.004;
 
 /** Default minimum contrast for the curret pixel to filter it. */
 const pixType DEFAULT_CURVE_THRESHOLD = 10.0;

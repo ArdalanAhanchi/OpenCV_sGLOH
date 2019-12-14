@@ -342,6 +342,7 @@ cv::KeyPoint getKp(std::vector<std::vector<cv::Mat>>& pyr, double sigma,
 {
     //Calculate the scale for this keypoint based on sigma and blur leve.
     double scale = sigma * pow(2.0, octave + (lvl / pyr[octave].size()));
+    std::cout << "Scale is: " << scale << std::endl;
 
     //Not needed(used) in sGLOH, so disabled by default to improve performance.
     if(CALC_ROTATION)
@@ -358,7 +359,8 @@ cv::KeyPoint getKp(std::vector<std::vector<cv::Mat>>& pyr, double sigma,
     }
 
     //Create a keypoint and detect it.
-    return cv::KeyPoint(cv::Point2f(r,c), scale, -1, 0, octave);
+    //return cv::KeyPoint(cv::Point2f(c,l), scale, -1, 0, octave);
+    return cv::KeyPoint(cv::Point2f(c * 2 * octave, r * 2 * octave), scale, -1, 0, octave);
 }
 
 
@@ -507,23 +509,35 @@ void detect(cv::Mat& src, std::vector<cv::KeyPoint>& dest)
 void test()
 {
     //Generate a test image
-    cv::Mat orig=cv::Mat::zeros(1000,1000,CV_8U);
+    cv::Mat orig=cv::Mat::zeros(1000, 1000, CV_8U);
     //Fill the image with noise.
     for (int i = 0; i < orig.rows; i++)
 	        for (int j = 0; j < orig.cols; j++)
-		    	orig.at<uchar>(i,j)= rand() % 255;
+		    	orig.at<uchar>(i,j)= rand() % 150 + 100;
+
+    int originA = rand() % 800 + 20;
+    int originB = rand() % 800 + 20;
+    int originC = rand() % 800 + 20;
+    int originD = rand() % 800 + 20;
+
+    int size = rand() % 20 + 50;
 
     //Add with two blobs (For testing detection).
-    for(int i = 100; i < 120; i++)
-        for(int j = 100; j < 120; j++)
+    for(int i = originA; i < originA + size; i++)
+        for(int j = originB; j < originB + size; j++)
             orig.at<uchar>(i,j) = 0;
 
-    for(int i = 800; i < 820; i++)
-        for(int j = 800; j < 820; j++)
+    for(int i = originC; i < originC + size; i++)
+        for(int j = originD; j < originD + size; j++)
             orig.at<uchar>(i,j) = 0;
+
+    //for(int i = 800; i < 820; i++)
+    //    for(int j = 800; j < 820; j++)
+    //        orig.at<uchar>(i,j) = 0;
+
 
     //Sift keypoint detection for comparison.
-    //Ptr<xfeatures2d::SIFT> detector = xfeatures2d::SIFT::create(0, 5, 0.04, 10, 1.6);
+    //cv::Ptr<xfeatures2d::SIFT> detector = xfeatures2d::SIFT::create();
     //std::vector<cv::KeyPoint> keypoints;
     //detector->detect(orig, keypoints);
     //std::cerr << keypoints.size() << " KeyPoints found by sift." << std::endl;
@@ -531,7 +545,17 @@ void test()
     //Calculate the keypoints using the implemented method.
     std::vector<cv::KeyPoint> kp;
     detect(orig, kp);
+
+    cv::Mat next;
+    cv::drawKeypoints(orig, kp, next, cv::Scalar(0,0,255));
+    show(next);
+
+    //cv::Mat nextTwo;
+    //cv::drawKeypoints(orig, keypoints, nextTwo, cv::Scalar(255,0,0));
+    //show(nextTwo);
+
     std::cerr << kp.size() << " KeyPoints found by sgloh." << std::endl;
 }
+
 
 }
