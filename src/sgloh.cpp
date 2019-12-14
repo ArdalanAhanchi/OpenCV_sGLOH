@@ -155,36 +155,35 @@ void calculate_sGLOH_Descriptor(int m, int n, bool psi, float sigma,
 
 	_descriptors.setTo(0);
 
+	// loop through all keypoints
 	for (int keypoint = 0; keypoint < (int)ksize; keypoint++)
 	{
-
+		// counter is used to calculate the initial histogram rotation
 		int counter = 0;
 		if (psi)
 		{
+			// center ring is a single region
 			for (int i = 0; i < m; i++)
 			{
 				int index = counter + ((i + 0) % m);
 				_descriptors.at<float>(keypoint, index) = CalculateBin(0, 0, i, m, n, psi, sigma, gradients, keypoints[keypoint]);
-				float foo = _descriptors.at<float>(keypoint, index);
-				foo = 0;
 			}
 			counter += m;
 		}
 		else
 		{
+			// center ring is multiple regions
 			for (int d = 0; d < m; d++)
 			{
 				for (int i = 0; i < m; i++)
 				{
 					int index = counter + ((i + d) % m);
 					_descriptors.at<float>(keypoint, index) = CalculateBin(0, d, i, m, n, psi, sigma, gradients, keypoints[keypoint]);
-					float foo = _descriptors.at<float>(keypoint, index);
-					foo = 0;
 				}
 				counter += m;
 			}
 		}
-
+		// work on outer rings
 		for (int r = 1; r <= n; r++)
 		{
 			for (int d = 0; d < m; d++)
@@ -193,8 +192,6 @@ void calculate_sGLOH_Descriptor(int m, int n, bool psi, float sigma,
 				{
 					int index = counter + ((i + d) % m);
 					_descriptors.at<float>(keypoint, index) = CalculateBin(r, d, i, m, n, psi, sigma, gradients, keypoints[keypoint]);
-					float foo = _descriptors.at<float>(keypoint, index);
-					foo = 0;
 				}
 				counter += m;
 			}
@@ -214,21 +211,28 @@ void calculate_sGLOH_Descriptor(int m, int n, bool psi, float sigma,
 	}
 }
 
+/*
+Discretely rotate a descriptor vector by one increment of 2*PI/m
+*/
 void rotateDescriptors(cv::Mat descriptors, cv::Mat& rotated, Options options)
 {
+	rotated = cv::Mat(descriptors.rows, descriptors.cols, CV_32F);
+	// check that the descriptor can actually be rotated
 	if (options.m > 1)
 	{
 		for (int i = 0; i < descriptors.rows; i++)
 		{
-			int indexCounter = 0;
 			int length = options.m * (options.m * options.n + 1 + (options.m - 1) * (options.psi ? 0 : 1));
 
+			// centralRegion is used if psi(H) is 0
 			float* centralRegion = new float[options.m];
 			int rings = options.n;
 			if (!options.psi)
 			{
+				// centralRegion won't be used, so make the outerRegions array larger
 				rings++;
 			}
+			// create a 3d array of floats
 			float*** outerRegions = new float** [rings];
 			for (int j = 0; j < rings; j++)
 			{
@@ -241,16 +245,20 @@ void rotateDescriptors(cv::Mat descriptors, cv::Mat& rotated, Options options)
 			int start = 0;
 			if (options.psi)
 			{
+				// rotate the central ring as a single region
 				for (int j = 0; j < options.m; j++)
 				{
 					centralRegion[(j + 1) % options.m] = descriptors.at<float>(i, j);
 				}
+				// assign the rotated values back to the descriptor vector
 				for (int j = 0; j < options.m; j++)
 				{
-					descriptors.at<float>(i, j) = centralRegion[j];
+					rotated.at<float>(i, j) = centralRegion[j];
 				}
+				// set the starting point for the outer regions
 				start = options.m;
 			}
+			// rotate each ring as multiple regions
 			int tempJ = start;
 			for (int j = 0; j < rings; j++)
 			{
@@ -262,6 +270,7 @@ void rotateDescriptors(cv::Mat descriptors, cv::Mat& rotated, Options options)
 					}
 				}
 			}
+			// assign the rotated values back to the descriptor vector
 			tempJ = start;
 			for (int j = 0; j < rings; j++)
 			{
@@ -269,10 +278,11 @@ void rotateDescriptors(cv::Mat descriptors, cv::Mat& rotated, Options options)
 				{
 					for (int l = 0; l < options.m; l++)
 					{
-						descriptors.at<float>(i, tempJ++) = outerRegions[j][k][l];
+						rotated.at<float>(i, tempJ++) = outerRegions[j][k][l];
 					}
 				}
 			}
+			// deallocate the array
 			for (int j = 0; j < rings; j++)
 			{
 				for (int k = 0; k < options.m; k++)
