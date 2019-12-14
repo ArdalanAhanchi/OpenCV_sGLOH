@@ -31,7 +31,7 @@ The results will be saved to the build folder.
 ./build -> All the compiled binaries.  
 ./src -> The source files (.cc, .cpp).  
 ./include -> All the header files (.h, .hpp).  
-./doc -> All the documentation files.  
+./doc -> All the documentation files (Including the report).  
 ./test -> All the test images used.  
 ./results -> The test results. The subdirectories are as follows:   
     image set name -> keypoint extractor type -> filenames include descriptor type
